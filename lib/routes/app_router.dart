@@ -8,6 +8,10 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/topup/topup_screen.dart';
+import '../screens/profile/faq_screen.dart';
+import '../screens/profile/feedback_screen.dart';
+import '../screens/profile/help_screen.dart';
+import '../screens/profile/legal_screens.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/setup/setup_screen.dart';
 import '../screens/splash/splash_screen.dart';
@@ -59,6 +63,26 @@ class AppRouter {
             GoRoute(
               path: '/profile',
               builder: (context, state) => const ProfileScreen(),
+            ),
+            GoRoute(
+              path: '/help',
+              builder: (context, state) => const HelpScreen(),
+            ),
+            GoRoute(
+              path: '/faq',
+              builder: (context, state) => const FaqScreen(),
+            ),
+            GoRoute(
+              path: '/feedback',
+              builder: (context, state) => const FeedbackScreen(),
+            ),
+            GoRoute(
+              path: '/privacy',
+              builder: (context, state) => const PrivacyScreen(),
+            ),
+            GoRoute(
+              path: '/terms',
+              builder: (context, state) => const TermsScreen(),
             ),
             GoRoute(
               path: '/admin',
