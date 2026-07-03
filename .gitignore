@@ -43,3 +43,24 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# --- Dembee Auction: Security ---
+# Firebase service account (ХЭЗЭЭ Ч commit хийхгүй)
+*serviceAccount*.json
+*service-account*.json
+firebase-adminsdk*.json
+
+# Environment / secrets
+.env
+.env.*
+*.pem
+*.p12
+
+# Firebase local config (firebase_options.dart-ийг commit хийж болно,
+# гэхдээ service account key хэзээ ч бүү оруул)
+# lib/firebase_options.dart  <- FlutterFire-ээр үүсгэснийг ихэвчлэн commit хийнэ
+
+# IDE / OS
+.vscode/
+*.code-workspace
+Thumbs.db
