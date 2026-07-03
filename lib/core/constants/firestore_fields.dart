@@ -22,6 +22,12 @@ class FirestoreFields {
   static const String winnerUid = 'winnerUid';
   static const String winnerName = 'winnerName';
   static const String finalPrice = 'finalPrice';
+  static const String image = 'image';
+  static const String retailValue = 'retailValue';
+  static const String phase = 'phase';
+  static const String phaseStartedAt = 'phaseStartedAt';
+  static const String totalBids = 'totalBids';
+  static const String winCountdownEndsAt = 'winCountdownEndsAt';
 
   // auctionHistory
   static const String auctionId = 'auctionId';
