@@ -10,6 +10,7 @@ class UserModel {
     required this.email,
     required this.createdAt,
     this.role = 'user',
+    this.bidBalance = 0,
   });
 
   final String uid;
@@ -18,8 +19,10 @@ class UserModel {
   final String email;
   final DateTime createdAt;
   final String role;
+  final int bidBalance;
 
   bool get isAdmin => role == 'admin';
+  bool get hasCredits => bidBalance > 0;
 
   factory UserModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
@@ -30,6 +33,7 @@ class UserModel {
       email: data[FirestoreFields.email] as String? ?? '',
       createdAt: _parseTimestamp(data[FirestoreFields.createdAt]),
       role: data[FirestoreFields.role] as String? ?? 'user',
+      bidBalance: (data[FirestoreFields.bidBalance] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -40,6 +44,7 @@ class UserModel {
       FirestoreFields.email: email,
       FirestoreFields.createdAt: Timestamp.fromDate(createdAt),
       FirestoreFields.role: role,
+      FirestoreFields.bidBalance: bidBalance,
     };
   }
 

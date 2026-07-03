@@ -8,7 +8,9 @@ import '../../models/auction_model.dart';
 import '../../services/auction_service.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
+import '../../services/credits_service.dart';
 import '../../widgets/countdown_timer_widget.dart';
+import '../../widgets/dembee_app_bar.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/loading_widget.dart';
 
@@ -24,6 +26,7 @@ class AuctionDetailScreen extends StatefulWidget {
 class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
   final _auctionService = AuctionService();
   final _authService = AuthService();
+  final _creditsService = CreditsService();
   bool _isBidding = false;
   String? _bidError;
 
@@ -53,15 +56,22 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/home'),
-        ),
-        title: const Text('Дуудлага'),
-      ),
-      body: StreamBuilder<AuctionModel?>(
+    return StreamBuilder(
+      stream: _creditsService.watchCurrentUser(),
+      builder: (context, userSnap) {
+        final bidBalance = userSnap.data?.bidBalance ?? 0;
+
+        return Scaffold(
+          backgroundColor: AppTheme.background,
+          appBar: DembeeAppBar(bidBalance: bidBalance),
+          body: _buildBody(bidBalance),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(int bidBalance) {
+    return StreamBuilder<AuctionModel?>(
         stream: _auctionService.watchAuction(widget.auctionId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -80,7 +90,8 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
             return const ErrorDisplayWidget(message: 'Дуудлага олдсонгүй');
           }
 
-          final canBid = auction.isActive && !auction.hasEnded;
+          final canBid =
+              auction.isActive && !auction.hasEnded && bidBalance > 0;
 
           return Column(
             children: [
@@ -155,23 +166,56 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: AppConstants.bidIncrements.map((amount) {
-                        return Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: ElevatedButton(
-                              onPressed: _isBidding
-                                  ? null
-                                  : () => _placeBid(auction, amount),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Үлдсэн санал: $bidBalance (-1 бүр)',
+                          style: AppTheme.monoStyle.copyWith(fontSize: 12),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: AppConstants.bidIncrements.map((amount) {
+                            return Expanded(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                child: ElevatedButton(
+                                  onPressed: _isBidding
+                                      ? null
+                                      : () => _placeBid(auction, amount),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                  ),
+                                  child: Text('+$amount₮'),
+                                ),
                               ),
-                              child: Text('+$amount₮'),
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else if (auction.isActive &&
+                  !auction.hasEnded &&
+                  bidBalance == 0)
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Санал дууссан байна',
+                          style: TextStyle(color: AppTheme.destructive),
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => context.go('/topup'),
+                          child: const Text('Санал багц авах'),
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -193,7 +237,6 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
             ],
           );
         },
-      ),
     );
   }
 }

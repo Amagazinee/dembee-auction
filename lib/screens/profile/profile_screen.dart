@@ -52,6 +52,15 @@ class ProfileScreen extends StatelessWidget {
               _ProfileTile(label: 'Нэр', value: profile.name),
               _ProfileTile(label: 'Имэйл', value: profile.email),
               _ProfileTile(label: 'Утас', value: profile.phone),
+              _ProfileTile(
+                label: 'Миний санал',
+                value: '${profile.bidBalance} үлдэгдсэн',
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => context.go('/topup'),
+                child: const Text('Санал багц авах'),
+              ),
               const SizedBox(height: 32),
               const Text(
                 'Миний ялсан',
