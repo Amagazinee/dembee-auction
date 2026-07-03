@@ -1,17 +1,41 @@
-# dembee_app
+# Дэмбээ (Dembee Auction)
 
-A new Flutter project.
+Монголын уламжлалт дуудлага худалдааны Flutter + Firebase апп.
 
-## Getting Started
+## Технологи
 
-This project is a starting point for a Flutter application.
+- **Flutter** + Dart
+- **Firebase** Authentication + Cloud Firestore
+- **GoRouter** — navigation
+- **Material 3** — dark theme + gold accent
 
-A few resources to get you started if this is your first Flutter project:
+## Эхлэх
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Дэлгэрэнгүй заавар: [SETUP.md](SETUP.md)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter pub get
+flutterfire configure
+flutter run
+```
+
+## Одоогийн төлөв
+
+| Функц | Төлөв |
+|-------|--------|
+| Төслийн бүтэц | ✅ |
+| Dark theme + gold | ✅ |
+| Firebase Auth (login/register) | ✅ |
+| Auction жагсаалт (realtime) | ✅ |
+| Bid (+1–+5) | ✅ |
+| Countdown timer widget | ✅ |
+| Firestore security rules | ✅ (template) |
+| Auction дуусах + winner | ⏳ |
+| Admin panel | ⏳ |
+| Notifications | ⏳ |
+
+## Аюулгүй байдал
+
+- Service account key-г **хэзээ ч** commit хийхгүй
+- Firestore rules заавал тохируулна
+- Дэлгэрэнгүй: [SETUP.md](SETUP.md#8-аюулгүй-байдлын-дүрэм)

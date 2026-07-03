@@ -1,0 +1,77 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Туслах функцүүд ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isValidBidIncrement(amount) {
+      return amount in [1, 2, 3, 4, 5];
+    }
+
+    // --- users ---
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId)
+        && request.resource.data.keys().hasAll(['name', 'phone', 'email', 'createdAt'])
+        && request.resource.data.role == 'user';
+      allow update: if isOwner(userId)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'createdAt']);
+      allow delete: if false;
+    }
+
+    // --- auctions ---
+    match /auctions/{auctionId} {
+      allow read: if isSignedIn();
+
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasAll(['title', 'price', 'endsAt', 'status'])
+        && request.resource.data.price >= 0
+        && request.resource.data.status in ['pending', 'active'];
+
+      allow update: if isSignedIn() && (
+        // Admin: статус, дуусах цаг засах
+        isAdmin()
+        ||
+        // Хэрэглэгч: зөвхөн идэвхтэй auction дээр bid
+        (
+          resource.data.status == 'active'
+          && request.resource.data.status == 'active'
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['price', 'lastBidder', 'lastBidUid', 'lastBidAmount', 'updatedAt'])
+          && request.resource.data.price == resource.data.price
+              + request.resource.data.lastBidAmount
+          && isValidBidIncrement(request.resource.data.lastBidAmount)
+          && request.resource.data.lastBidUid == request.auth.uid
+        )
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // --- auctionHistory ---
+    match /auctionHistory/{historyId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.userUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Бусад бүх collection — хориглоно
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
