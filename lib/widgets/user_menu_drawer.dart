@@ -157,17 +157,26 @@ class UserMenuDrawer extends StatelessWidget {
             _MenuItem(
               icon: Icons.chat_bubble_outline,
               label: 'Санал хүсэлт',
-              onTap: onClose,
+              onTap: () {
+                onClose();
+                context.go('/feedback');
+              },
             ),
             _MenuItem(
               icon: Icons.help_outline,
               label: 'Түгээмэл асуултууд',
-              onTap: onClose,
+              onTap: () {
+                onClose();
+                context.go('/faq');
+              },
             ),
             _MenuItem(
               icon: Icons.headset_mic_outlined,
               label: 'Тусламж',
-              onTap: onClose,
+              onTap: () {
+                onClose();
+                context.go('/help');
+              },
             ),
             _SectionHeader('нөхцөл'),
             _MenuItem(
