@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/auth_state_notifier.dart';
+import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/auction/auction_detail_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
@@ -58,6 +59,10 @@ class AppRouter {
             GoRoute(
               path: '/profile',
               builder: (context, state) => const ProfileScreen(),
+            ),
+            GoRoute(
+              path: '/admin',
+              builder: (context, state) => const AdminDashboardScreen(),
             ),
             GoRoute(
               path: '/auction/:id',

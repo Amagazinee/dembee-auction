@@ -13,12 +13,14 @@ class DualTimer extends StatefulWidget {
     this.resetLabel = 'санал бүрт 30:00-с дахин эхэлнэ',
     this.compact = false,
     this.tick,
+    this.gradient = false,
   });
 
   final DateTime winCountdownEndsAt;
   final String resetLabel;
   final bool compact;
   final DateTime? tick;
+  final bool gradient;
 
   @override
   State<DualTimer> createState() => _DualTimerState();
@@ -84,9 +86,20 @@ class _DualTimerState extends State<DualTimer> {
         horizontal: compact ? 8 : 16,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2A3A),
+        gradient: widget.gradient
+            ? const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF7C2D12), Color(0xFF1A1A20)],
+              )
+            : null,
+        color: widget.gradient ? null : const Color(0xFF1A2A3A),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFF2563EB).withValues(alpha: 0.4)),
+        border: Border.all(
+          color: widget.gradient
+              ? const Color(0xFFF97316).withValues(alpha: 0.5)
+              : const Color(0xFF2563EB).withValues(alpha: 0.4),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -96,7 +109,9 @@ class _DualTimerState extends State<DualTimer> {
             style: AppTheme.bodyStyle.copyWith(
               fontSize: compact ? 8 : 10,
               letterSpacing: 1.2,
-              color: const Color(0xFF60A5FA),
+              color: widget.gradient
+                  ? const Color(0xFFFDBA74)
+                  : const Color(0xFF60A5FA),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -105,7 +120,9 @@ class _DualTimerState extends State<DualTimer> {
             isExpired ? '00:00' : formatDuration(remaining),
             style: AppTheme.monoStyle.copyWith(
               fontSize: compact ? 16 : 28,
-              color: const Color(0xFF93C5FD),
+              color: widget.gradient
+                  ? const Color(0xFFFBBF24)
+                  : const Color(0xFF93C5FD),
               fontWeight: FontWeight.bold,
             ),
           ),

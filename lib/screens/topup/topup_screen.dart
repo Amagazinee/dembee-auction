@@ -65,7 +65,8 @@ class _TopUpScreenState extends State<TopUpScreen> {
           backgroundColor: AppTheme.background,
           appBar: DembeeAppBar(
             bidBalance: balance,
-            onProfile: () => context.go('/profile'),
+            user: user,
+            showAdminBadge: user?.isAdmin ?? false,
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
