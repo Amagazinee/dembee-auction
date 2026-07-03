@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../core/constants/app_constants.dart';
+import '../core/constants/auction_phases.dart';
 import '../core/constants/firestore_fields.dart';
 import '../core/errors/app_exception.dart';
 import '../models/auction_model.dart';
@@ -78,6 +79,12 @@ class AuctionService {
         }
 
         final currentPrice = (data[FirestoreFields.price] as num?)?.toInt() ?? 0;
+        final currentPhase =
+            (data[FirestoreFields.phase] as num?)?.toInt() ?? 1;
+        final totalBids =
+            (data[FirestoreFields.totalBids] as num?)?.toInt() ?? 0;
+        final phaseConfig = AuctionPhases.forPhase(currentPhase);
+        final winReset = DateTime.now().add(phaseConfig.winCountdown);
 
         transaction.update(userRef, {
           FirestoreFields.bidBalance: balance - 1,
@@ -88,6 +95,9 @@ class AuctionService {
           FirestoreFields.lastBidder: bidderName,
           FirestoreFields.lastBidUid: bidderUid,
           FirestoreFields.lastBidAmount: bidAmount,
+          FirestoreFields.totalBids: totalBids + 1,
+          FirestoreFields.phase: currentPhase,
+          FirestoreFields.winCountdownEndsAt: Timestamp.fromDate(winReset),
           FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
         });
       });

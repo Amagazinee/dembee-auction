@@ -23,6 +23,10 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: AppTheme.background,
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(height: 1, color: AppTheme.border),
+      ),
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
