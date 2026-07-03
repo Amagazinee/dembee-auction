@@ -182,12 +182,18 @@ class UserMenuDrawer extends StatelessWidget {
             _MenuItem(
               icon: Icons.shield_outlined,
               label: 'Нууцлалын бодлого',
-              onTap: onClose,
+              onTap: () {
+                onClose();
+                context.go('/privacy');
+              },
             ),
             _MenuItem(
               icon: Icons.description_outlined,
               label: 'Үйлчилгээний нөхцөл',
-              onTap: onClose,
+              onTap: () {
+                onClose();
+                context.go('/terms');
+              },
             ),
             const Spacer(),
             Padding(
