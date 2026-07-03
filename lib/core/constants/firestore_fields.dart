@@ -8,6 +8,7 @@ class FirestoreFields {
   static const String email = 'email';
   static const String createdAt = 'createdAt';
   static const String role = 'role';
+  static const String bidBalance = 'bidBalance';
 
   // auctions
   static const String title = 'title';
@@ -27,4 +28,10 @@ class FirestoreFields {
   static const String userUid = 'userUid';
   static const String userName = 'userName';
   static const String amount = 'amount';
+
+  // purchases
+  static const String packageId = 'packageId';
+  static const String bidCount = 'bidCount';
+  static const String paymentMethod = 'paymentMethod';
+  static const String purchaseStatus = 'status';
 }

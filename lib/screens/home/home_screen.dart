@@ -5,8 +5,10 @@ import '../../core/utils/formatters.dart';
 import '../../models/auction_model.dart';
 import '../../services/auction_service.dart';
 import '../../services/auth_service.dart';
+import '../../services/credits_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/countdown_timer_widget.dart';
+import '../../widgets/dembee_app_bar.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/loading_widget.dart';
 
@@ -16,59 +18,61 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auctionService = AuctionService();
-    final authService = AuthService();
+    final creditsService = CreditsService();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Дуудлага худалдаа'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline),
-            onPressed: () => context.go('/profile'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await authService.logout();
-              if (context.mounted) context.go('/login');
+    return StreamBuilder(
+      stream: creditsService.watchCurrentUser(),
+      builder: (context, userSnapshot) {
+        final bidBalance = userSnapshot.data?.bidBalance ?? 0;
+
+        return Scaffold(
+          backgroundColor: AppTheme.background,
+          appBar: DembeeAppBar(bidBalance: bidBalance),
+          body: StreamBuilder<List<AuctionModel>>(
+            stream: auctionService.watchAuctions(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const LoadingWidget(message: 'Дуудлага ачаалж байна...');
+              }
+
+              if (snapshot.hasError) {
+                return ErrorDisplayWidget(
+                  message: 'Дуудлага уншихад алдаа гарлаа.\n${snapshot.error}',
+                );
+              }
+
+              final auctions = snapshot.data ?? [];
+
+              if (auctions.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'Одоогоор дуудлага байхгүй байна',
+                    style: TextStyle(color: AppTheme.mutedForeground),
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: () async {},
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: auctions.length,
+                  itemBuilder: (context, index) {
+                    return _AuctionCard(auction: auctions[index]);
+                  },
+                ),
+              );
             },
           ),
-        ],
-      ),
-      body: StreamBuilder<List<AuctionModel>>(
-        stream: auctionService.watchAuctions(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingWidget(message: 'Дуудлага ачаалж байна...');
-          }
-
-          if (snapshot.hasError) {
-            return ErrorDisplayWidget(
-              message: 'Дуудлага уншихад алдаа гарлаа.\n${snapshot.error}',
-            );
-          }
-
-          final auctions = snapshot.data ?? [];
-
-          if (auctions.isEmpty) {
-            return const Center(
-              child: Text(
-                'Одоогоор дуудлага байхгүй байна',
-                style: TextStyle(color: Colors.white54),
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: auctions.length,
-            itemBuilder: (context, index) {
-              final auction = auctions[index];
-              return _AuctionCard(auction: auction);
-            },
-          );
-        },
-      ),
+          floatingActionButton: bidBalance == 0
+              ? FloatingActionButton.extended(
+                  onPressed: () => context.go('/topup'),
+                  icon: const Icon(Icons.bolt),
+                  label: const Text('Санал авах'),
+                )
+              : null,
+        );
+      },
     );
   }
 }
@@ -78,13 +82,20 @@ class _AuctionCard extends StatelessWidget {
 
   final AuctionModel auction;
 
+  bool get _isFinished => auction.isClosed || auction.hasEnded;
+
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: AppTheme.card,
       margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(4),
+        side: const BorderSide(color: AppTheme.border),
+      ),
       child: InkWell(
         onTap: () => context.go('/auction/${auction.id}'),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(4),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -95,24 +106,25 @@ class _AuctionCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       auction.title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style: AppTheme.headingStyle.copyWith(fontSize: 16),
                     ),
                   ),
-                  if (auction.isClosed)
+                  if (_isFinished)
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.redAccent.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppTheme.destructive.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(
                         'Дууссан',
-                        style: TextStyle(color: Colors.redAccent, fontSize: 12),
+                        style: TextStyle(
+                          color: AppTheme.destructive,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                 ],
@@ -123,10 +135,7 @@ class _AuctionCard extends StatelessWidget {
                 children: [
                   Text(
                     formatPrice(auction.price),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: AppTheme.gold,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    style: AppTheme.monoStyle.copyWith(fontSize: 20),
                   ),
                   CountdownTimerWidget(endsAt: auction.endsAt),
                 ],
@@ -135,9 +144,10 @@ class _AuctionCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Сүүлийн санал: ${auction.lastBidder} (+${auction.lastBidAmount}₮)',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white54,
-                      ),
+                  style: AppTheme.bodyStyle.copyWith(
+                    fontSize: 12,
+                    color: AppTheme.mutedForeground,
+                  ),
                 ),
               ],
             ],

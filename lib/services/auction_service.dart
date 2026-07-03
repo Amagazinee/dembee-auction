@@ -14,20 +14,17 @@ class AuctionService {
   CollectionReference<Map<String, dynamic>> get _auctions =>
       _firestore.collection(AppConstants.auctionsCollection);
 
-  /// Бүх auction-ийг realtime унших
+  CollectionReference<Map<String, dynamic>> get _users =>
+      _firestore.collection(AppConstants.usersCollection);
+
   Stream<List<AuctionModel>> watchAuctions() {
-    return _auctions.snapshots().map(
-          (snapshot) {
-            final list = snapshot.docs
-                .map(AuctionModel.fromFirestore)
-                .toList();
-            list.sort((a, b) => b.endsAt.compareTo(a.endsAt));
-            return list;
-          },
-        );
+    return _auctions.snapshots().map((snapshot) {
+      final list = snapshot.docs.map(AuctionModel.fromFirestore).toList();
+      list.sort((a, b) => b.endsAt.compareTo(a.endsAt));
+      return list;
+    });
   }
 
-  /// Нэг auction-ийг realtime унших
   Stream<AuctionModel?> watchAuction(String docId) {
     return _auctions.doc(docId).snapshots().map((doc) {
       if (!doc.exists) return null;
@@ -35,7 +32,7 @@ class AuctionService {
     });
   }
 
-  /// Санал өгөх (+1 – +5)
+  /// Санал өгөх: 1 кредит хасах + үнэ ₮1–₮5 нэмэх
   Future<void> placeBid({
     required String auctionId,
     required int bidAmount,
@@ -46,29 +43,48 @@ class AuctionService {
       throw const FirestoreException('Зөвхөн +1 – +5 санал өгөх боломжтой');
     }
 
-    final docRef = _auctions.doc(auctionId);
+    final auctionRef = _auctions.doc(auctionId);
+    final userRef = _users.doc(bidderUid);
 
     try {
       await _firestore.runTransaction((transaction) async {
-        final snapshot = await transaction.get(docRef);
-        if (!snapshot.exists) {
+        final userSnap = await transaction.get(userRef);
+        final auctionSnap = await transaction.get(auctionRef);
+
+        if (!userSnap.exists) {
+          throw const FirestoreException('Хэрэглэгчийн профайл олдсонгүй');
+        }
+        if (!auctionSnap.exists) {
           throw const FirestoreException('Дуудлага олдсонгүй');
         }
 
-        final data = snapshot.data()!;
+        final balance =
+            (userSnap.data()![FirestoreFields.bidBalance] as num?)?.toInt() ?? 0;
+        if (balance < 1) {
+          throw const FirestoreException(
+            'Санал дууссан байна. Санал багц аваарай.',
+          );
+        }
+
+        final data = auctionSnap.data()!;
         final status = data[FirestoreFields.status] as String? ?? '';
         final endsAt = (data[FirestoreFields.endsAt] as Timestamp?)?.toDate();
 
         if (status != AppConstants.statusActive) {
           throw const FirestoreException('Дуудлага идэвхгүй байна');
         }
-
         if (endsAt != null && DateTime.now().isAfter(endsAt)) {
           throw const FirestoreException('Дуудлага дууссан байна');
         }
 
-        transaction.update(docRef, {
-          FirestoreFields.price: FieldValue.increment(bidAmount),
+        final currentPrice = (data[FirestoreFields.price] as num?)?.toInt() ?? 0;
+
+        transaction.update(userRef, {
+          FirestoreFields.bidBalance: balance - 1,
+        });
+
+        transaction.update(auctionRef, {
+          FirestoreFields.price: currentPrice + bidAmount,
           FirestoreFields.lastBidder: bidderName,
           FirestoreFields.lastBidUid: bidderUid,
           FirestoreFields.lastBidAmount: bidAmount,

@@ -6,6 +6,7 @@ import '../screens/auction/auction_detail_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/topup/topup_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/setup/setup_screen.dart';
 import '../screens/splash/splash_screen.dart';
@@ -49,6 +50,10 @@ class AppRouter {
             GoRoute(
               path: '/home',
               builder: (context, state) => const HomeScreen(),
+            ),
+            GoRoute(
+              path: '/topup',
+              builder: (context, state) => const TopUpScreen(),
             ),
             GoRoute(
               path: '/profile',
