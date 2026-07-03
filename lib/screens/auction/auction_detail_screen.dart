@@ -185,7 +185,7 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                                       },
                                     ),
                                   ),
-                                  const HowItWorksPanel(),
+                                  HowItWorksPanel(),
                                 ],
                               ],
                             ),
@@ -217,7 +217,7 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                                               recentBids: bids,
                                             ),
                                           ),
-                                          const HowItWorksPanel(),
+                                          HowItWorksPanel(),
                                         ],
                                       );
                                     },
