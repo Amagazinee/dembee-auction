@@ -8,10 +8,12 @@ class PhaseBar extends StatelessWidget {
     super.key,
     required this.currentPhase,
     this.totalPhases = 8,
+    this.compact = false,
   });
 
   final int currentPhase;
   final int totalPhases;
+  final bool compact;
 
   static const List<Color> _segmentColors = [
     Color(0xFF3B82F6),
@@ -36,7 +38,7 @@ class PhaseBar extends StatelessWidget {
         return Expanded(
           child: Container(
             margin: EdgeInsets.only(right: index < totalPhases - 1 ? 4 : 0),
-            height: 28,
+            height: compact ? 20 : 28,
             decoration: BoxDecoration(
               color: isActive || isPast
                   ? color.withValues(alpha: isActive ? 1 : 0.35)
@@ -50,7 +52,7 @@ class PhaseBar extends StatelessWidget {
             child: Text(
               '$phaseNum',
               style: AppTheme.monoStyle.copyWith(
-                fontSize: 10,
+                fontSize: compact ? 8 : 10,
                 color: isActive || isPast ? Colors.white : AppTheme.mutedForeground,
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
               ),
