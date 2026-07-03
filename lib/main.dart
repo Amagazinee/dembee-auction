@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'core/constants/app_constants.dart';
 import 'core/errors/app_exception.dart';
@@ -11,6 +11,13 @@ import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Фонтыг эхлээд татаж авах — emulator дээр гацахаас сэргийлнэ
+  await GoogleFonts.pendingFonts([
+    GoogleFonts.fraunces(),
+    GoogleFonts.manrope(),
+    GoogleFonts.jetBrainsMono(),
+  ]);
 
   try {
     await FirebaseService.initialize();

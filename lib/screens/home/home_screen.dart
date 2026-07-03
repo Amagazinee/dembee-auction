@@ -11,6 +11,7 @@ import '../../widgets/auction_card.dart';
 import '../../widgets/dembee_app_bar.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/loading_widget.dart';
+import '../../widgets/second_ticker.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -110,58 +111,64 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }
 
-              return RefreshIndicator(
-                color: AppTheme.primary,
-                backgroundColor: AppTheme.card,
-                onRefresh: () async {},
-                child: CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Идэвхтэй дуудлага',
-                              style: AppTheme.headingStyle.copyWith(fontSize: 20),
+              return SecondTicker(
+                builder: (context, now) {
+                  return RefreshIndicator(
+                    color: AppTheme.primary,
+                    backgroundColor: AppTheme.card,
+                    onRefresh: () async {},
+                    child: CustomScrollView(
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Идэвхтэй дуудлага',
+                                  style:
+                                      AppTheme.headingStyle.copyWith(fontSize: 20),
+                                ),
+                                const Spacer(),
+                                if (bidBalance == 0)
+                                  TextButton.icon(
+                                    onPressed: () => context.go('/topup'),
+                                    icon: const Icon(Icons.bolt, size: 16),
+                                    label: const Text('Санал авах'),
+                                  ),
+                              ],
                             ),
-                            const Spacer(),
-                            if (bidBalance == 0)
-                              TextButton.icon(
-                                onPressed: () => context.go('/topup'),
-                                icon: const Icon(Icons.bolt, size: 16),
-                                label: const Text('Санал авах'),
-                              ),
-                          ],
+                          ),
                         ),
-                      ),
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                          sliver: SliverGrid(
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              mainAxisExtent: 360,
+                            ),
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) {
+                                final auction = auctions[index];
+                                return AuctionCard(
+                                  auction: auction,
+                                  bidBalance: bidBalance,
+                                  tick: now,
+                                  isBidding: _biddingAuctionId == auction.id,
+                                  onQuickBid: () => _quickBid(auction),
+                                );
+                              },
+                              childCount: auctions.length,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                      sliver: SliverGrid(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.52,
-                        ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final auction = auctions[index];
-                            return AuctionCard(
-                              auction: auction,
-                              bidBalance: bidBalance,
-                              isBidding: _biddingAuctionId == auction.id,
-                              onQuickBid: () => _quickBid(auction),
-                            );
-                          },
-                          childCount: auctions.length,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
