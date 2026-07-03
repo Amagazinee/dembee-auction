@@ -35,6 +35,7 @@ class AuctionModel {
   bool get isActive => status == AppConstants.statusActive;
   bool get isClosed => status == AppConstants.statusClosed;
   bool get hasEnded => DateTime.now().isAfter(endsAt);
+  bool get canBid => isActive && !hasEnded;
 
   Duration get remaining => endsAt.difference(DateTime.now());
 
