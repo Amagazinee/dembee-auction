@@ -34,6 +34,7 @@ class FirestoreFields {
   static const String userUid = 'userUid';
   static const String userName = 'userName';
   static const String amount = 'amount';
+  static const String priceAfter = 'priceAfter';
 
   // purchases
   static const String packageId = 'packageId';

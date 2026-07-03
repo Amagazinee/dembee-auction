@@ -32,3 +32,29 @@ String formatNumber(int value) {
 
 /// Үнийг ₮ форматаар харуулах
 String formatPrice(int price) => '${formatNumber(price)}₮';
+
+/// Хэмнэлт — Figma "₮3.49сая хэмнэлт"
+String formatSavings(int savings) {
+  if (savings <= 0) return '';
+  if (savings >= 1000000) {
+    final millions = savings / 1000000;
+    return '₮${millions.toStringAsFixed(2)}сая хэмнэлт';
+  }
+  return '${formatPrice(savings)} хэмнэлт';
+}
+
+/// Нэр масклах — "Б.Дорж***"
+String maskName(String name) {
+  final parts = name.trim().split(RegExp(r'\s+'));
+  if (parts.isEmpty) return '***';
+  if (parts.length == 1) {
+    final n = parts.first;
+    if (n.length <= 2) return '$n***';
+    return '${n.substring(0, n.length.clamp(0, 4))}***';
+  }
+  final first = parts.first;
+  final last = parts.last;
+  final initial = first.isNotEmpty ? first[0] : '';
+  final lastPart = last.length > 1 ? last.substring(0, last.length.clamp(0, 4)) : last;
+  return '$initial.$lastPart***';
+}
