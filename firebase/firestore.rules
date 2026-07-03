@@ -3,7 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- Туслах функцүүд ---
     function isSignedIn() {
       return request.auth != null;
     }
@@ -18,7 +17,11 @@ service cloud.firestore {
     }
 
     function isValidBidIncrement(amount) {
-      return amount in [1, 2, 3, 4, 5];
+      return amount is int && amount in [1, 2, 3, 4, 5];
+    }
+
+    function isAuctionExpired(endsAt) {
+      return endsAt is timestamp && endsAt <= request.time;
     }
 
     // --- users ---
@@ -42,12 +45,12 @@ service cloud.firestore {
         && request.resource.data.status in ['pending', 'active'];
 
       allow update: if isSignedIn() && (
-        // Admin: статус, дуусах цаг засах
         isAdmin()
         ||
-        // Хэрэглэгч: зөвхөн идэвхтэй auction дээр bid
+        // Санал өгөх
         (
           resource.data.status == 'active'
+          && !isAuctionExpired(resource.data.endsAt)
           && request.resource.data.status == 'active'
           && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['price', 'lastBidder', 'lastBidUid', 'lastBidAmount', 'updatedAt'])
@@ -55,6 +58,23 @@ service cloud.firestore {
               + request.resource.data.lastBidAmount
           && isValidBidIncrement(request.resource.data.lastBidAmount)
           && request.resource.data.lastBidUid == request.auth.uid
+        )
+        ||
+        // Цаг дуусахад хаах + ялагч тодорхойлох
+        (
+          resource.data.status == 'active'
+          && isAuctionExpired(resource.data.endsAt)
+          && request.resource.data.status == 'closed'
+          && request.resource.data.finalPrice == resource.data.price
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'winnerUid', 'winnerName', 'finalPrice', 'updatedAt'])
+          && (
+            !('lastBidUid' in resource.data) || resource.data.lastBidUid == null
+            || (
+              request.resource.data.winnerUid == resource.data.lastBidUid
+              && request.resource.data.winnerName == resource.data.lastBidder
+            )
+          )
         )
       );
 
@@ -65,13 +85,12 @@ service cloud.firestore {
     match /auctionHistory/{historyId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
-        && request.resource.data.userUid == request.auth.uid;
+        && request.resource.data.userUid == request.auth.uid
+        && request.resource.data.keys().hasAll([
+          'auctionId', 'userUid', 'userName', 'amount', 'createdAt'
+        ])
+        && isValidBidIncrement(request.resource.data.amount);
       allow update, delete: if false;
-    }
-
-    // Бусад бүх collection — хориглоно
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }

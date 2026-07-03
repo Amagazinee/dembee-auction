@@ -28,9 +28,12 @@ flutter run
 | Firebase Auth (login/register) | ✅ |
 | Auction жагсаалт (realtime) | ✅ |
 | Bid (+1–+5) | ✅ |
-| Countdown timer widget | ✅ |
-| Firestore security rules | ✅ (template) |
-| Auction дуусах + winner | ⏳ |
+| Countdown timer | ✅ |
+| Auction дуусах + bid хаах | ✅ |
+| Winner тодорхойлох | ✅ |
+| Bid history | ✅ |
+| Profile (ялсан + санал) | ✅ |
+| Firestore security rules | ✅ |
 | Admin panel | ⏳ |
 | Notifications | ⏳ |
 

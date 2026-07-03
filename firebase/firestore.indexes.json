@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "auctionHistory",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "auctionId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "auctionHistory",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userUid", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

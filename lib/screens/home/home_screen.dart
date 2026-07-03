@@ -64,7 +64,10 @@ class HomeScreen extends StatelessWidget {
             itemCount: auctions.length,
             itemBuilder: (context, index) {
               final auction = auctions[index];
-              return _AuctionCard(auction: auction);
+              return _AuctionCard(
+                auction: auction,
+                auctionService: auctionService,
+              );
             },
           );
         },
@@ -74,9 +77,15 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _AuctionCard extends StatelessWidget {
-  const _AuctionCard({required this.auction});
+  const _AuctionCard({
+    required this.auction,
+    required this.auctionService,
+  });
 
   final AuctionModel auction;
+  final AuctionService auctionService;
+
+  bool get _isFinished => auction.isClosed || auction.hasEnded;
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +109,7 @@ class _AuctionCard extends StatelessWidget {
                           ),
                     ),
                   ),
-                  if (auction.isClosed)
+                  if (_isFinished)
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -128,7 +137,12 @@ class _AuctionCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                   ),
-                  CountdownTimerWidget(endsAt: auction.endsAt),
+                  CountdownTimerWidget(
+                    endsAt: auction.endsAt,
+                    onFinished: auction.isActive
+                        ? () => auctionService.closeAuctionIfExpired(auction.id)
+                        : null,
+                  ),
                 ],
               ),
               if (auction.lastBidder != null) ...[
@@ -138,6 +152,16 @@ class _AuctionCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.white54,
                       ),
+                ),
+              ],
+              if (auction.isClosed && auction.winnerName != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '🏆 ${auction.winnerName} — ${formatPrice(auction.finalPrice ?? auction.price)}',
+                  style: const TextStyle(
+                    color: AppTheme.gold,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ],

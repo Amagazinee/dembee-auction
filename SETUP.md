@@ -66,6 +66,12 @@ Firebase Console → Firestore → Rules хэсэгт `firebase/firestore.rules`
 
 **Чухал:** Rules тавихгүй бол хэн ч өгөгдөл устгаж, үнэ өөрчилж болно.
 
+### 4.1 Firestore Indexes
+
+Firebase Console → Firestore → Indexes хэсэгт `firebase/firestore.indexes.json` файлын индексүүдийг үүсгэнэ.
+
+Эсвэл апп ажиллуулахад "index required" алдаа гарвал Console дээрх линкээр автоматаар үүсгэнэ.
+
 ---
 
 ## 5. Firestore бүтэц
@@ -166,12 +172,13 @@ lib/
 
 ## 10. Дараагийн алхмууд
 
-1. ✅ Суурь бүтэц (одоо)
-2. ⏳ Countdown timer бүрэн интеграци
-3. ⏳ Auction дуусах + winner
-4. ⏳ Bid history
-5. ⏳ Admin panel
-6. ⏳ Push notification
+1. ✅ Суурь бүтэц
+2. ✅ Countdown timer
+3. ✅ Auction дуусах + winner
+4. ✅ Bid history
+5. ✅ Profile (ялсан + санал)
+6. ⏳ Admin panel
+7. ⏳ Push notification
 
 ---
 
