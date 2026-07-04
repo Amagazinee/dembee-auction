@@ -18,12 +18,14 @@ class DembeeLogo extends StatelessWidget {
   final double? textSize;
   final bool compact;
 
+  static const assetPath = 'assets/images/logo.png';
+
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _LogoImage(size: size),
+        DembeeLogoIcon(size: size),
         if (showText) ...[
           SizedBox(width: compact ? 6 : 8),
           _Wordmark(
@@ -36,25 +38,32 @@ class DembeeLogo extends StatelessWidget {
   }
 }
 
-class _LogoImage extends StatelessWidget {
-  const _LogoImage({required this.size});
+/// Зөвхөн дөрвөлжин тэмдэг — PNG эсвэл CustomPainter
+class DembeeLogoIcon extends StatelessWidget {
+  const DembeeLogoIcon({
+    super.key,
+    required this.size,
+    this.showGlow = false,
+  });
 
   final double size;
-
-  static const _assetPath = 'assets/images/logo.png';
+  final bool showGlow;
 
   @override
   Widget build(BuildContext context) {
+    final radius = size * 0.04;
+
     return ClipRRect(
-      borderRadius: BorderRadius.circular(size * 0.12),
+      borderRadius: BorderRadius.circular(radius),
       child: Image.asset(
-        _assetPath,
+        DembeeLogo.assetPath,
         width: size,
         height: size,
-        fit: BoxFit.cover,
+        fit: BoxFit.contain,
         errorBuilder: (_, __, ___) => DembeeLogoMark(
           size: size,
-          borderRadius: size * 0.12,
+          borderRadius: radius,
+          showGlow: showGlow,
         ),
       ),
     );
@@ -125,8 +134,6 @@ class DembeeLogoLarge extends StatelessWidget {
 
   final double size;
 
-  static const _assetPath = 'assets/images/logo.png';
-
   @override
   Widget build(BuildContext context) {
     final textSize = size * 0.28;
@@ -134,20 +141,7 @@ class DembeeLogoLarge extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(size * 0.1),
-          child: Image.asset(
-            _assetPath,
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => DembeeLogoMark(
-              size: size,
-              borderRadius: size * 0.1,
-              showGlow: true,
-            ),
-          ),
-        ),
+        DembeeLogoIcon(size: size, showGlow: true),
         SizedBox(height: size * 0.14),
         _Wordmark(
           fontSize: textSize,
