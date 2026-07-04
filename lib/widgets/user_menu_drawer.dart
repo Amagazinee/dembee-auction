@@ -144,7 +144,7 @@ class UserMenuDrawer extends StatelessWidget {
             ),
             _MenuItem(
               icon: Icons.shopping_bag_outlined,
-              label: 'Худалдан авалтын түүх',
+              label: 'Дуудлага худалдааны түүх',
               onTap: () {
                 onClose();
                 context.go('/purchases');

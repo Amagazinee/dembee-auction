@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/constants/auction_phases.dart';
@@ -28,6 +29,18 @@ class AuctionService {
       list.sort((a, b) => b.endsAt.compareTo(a.endsAt));
       return list;
     });
+  }
+
+  /// Хэрэглэгчийн ялсан дуудлага худалдаанууд
+  Stream<List<AuctionModel>> watchWonAuctions() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return Stream.value([]);
+
+    return _auctions
+        .where(FirestoreFields.winnerUid, isEqualTo: uid)
+        .orderBy(FirestoreFields.endsAt, descending: true)
+        .snapshots()
+        .map((s) => s.docs.map(AuctionModel.fromFirestore).toList());
   }
 
   Stream<AuctionModel?> watchAuction(String docId) {
