@@ -1,46 +1,34 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'dembee_logo_mark.dart';
 
-/// Figma лого — assets/images/logo.png
+/// Figma лого — assets/images/logo.png эсвэл зохион бүтээсэн тэмдэг
 class DembeeLogo extends StatelessWidget {
   const DembeeLogo({
     super.key,
     this.size = 32,
     this.showText = true,
     this.textSize,
+    this.compact = false,
   });
 
   final double size;
   final bool showText;
   final double? textSize;
-
-  static const _assetPath = 'assets/images/logo.png';
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: Image.asset(
-            _assetPath,
-            width: size,
-            height: size,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _PlaceholderIcon(size: size),
-          ),
-        ),
+        _LogoImage(size: size),
         if (showText) ...[
-          const SizedBox(width: 8),
-          Text(
-            'ДЭМБЭЭ',
-            style: AppTheme.headingStyle.copyWith(
-              fontSize: textSize ?? size * 0.55,
-              color: AppTheme.primary,
-              letterSpacing: 1,
-            ),
+          SizedBox(width: compact ? 6 : 8),
+          _Wordmark(
+            fontSize: textSize ?? size * 0.55,
+            compact: compact,
           ),
         ],
       ],
@@ -48,28 +36,84 @@ class DembeeLogo extends StatelessWidget {
   }
 }
 
-class _PlaceholderIcon extends StatelessWidget {
-  const _PlaceholderIcon({required this.size});
+class _LogoImage extends StatelessWidget {
+  const _LogoImage({required this.size});
 
   final double size;
 
+  static const _assetPath = 'assets/images/logo.png';
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFFE8C547), Color(0xFFC9A84C)],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.12),
+      child: Image.asset(
+        _assetPath,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => DembeeLogoMark(
+          size: size,
+          borderRadius: size * 0.12,
         ),
-        borderRadius: BorderRadius.circular(4),
       ),
-      child: Icon(
-        Icons.gavel_rounded,
-        size: size * 0.55,
-        color: AppTheme.primaryForeground,
+    );
+  }
+}
+
+class _Wordmark extends StatelessWidget {
+  const _Wordmark({
+    required this.fontSize,
+    this.compact = false,
+    this.showTagline = false,
+  });
+
+  final double fontSize;
+  final bool compact;
+  final bool showTagline;
+
+  @override
+  Widget build(BuildContext context) {
+    if (showTagline) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _brandText(fontSize),
+          SizedBox(height: fontSize * 0.15),
+          Text(
+            'AUCTION',
+            style: AppTheme.monoStyle.copyWith(
+              fontSize: fontSize * 0.32,
+              letterSpacing: fontSize * 0.2,
+              color: AppTheme.mutedForeground,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return _brandText(fontSize);
+  }
+
+  Widget _brandText(double fontSize) {
+    return ShaderMask(
+      blendMode: BlendMode.srcIn,
+      shaderCallback: (bounds) => const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFE8C547), AppTheme.primary, Color(0xFF9A7A32)],
+      ).createShader(bounds),
+      child: Text(
+        'ДЭМБЭЭ',
+        style: AppTheme.headingStyle.copyWith(
+          fontSize: fontSize,
+          fontWeight: FontWeight.w700,
+          letterSpacing: compact ? 0.8 : 1.2,
+          height: 1,
+          color: Colors.white,
+        ),
       ),
     );
   }
@@ -85,27 +129,29 @@ class DembeeLogoLarge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textSize = size * 0.28;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(size * 0.1),
           child: Image.asset(
             _assetPath,
             width: size,
             height: size,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _PlaceholderIcon(size: size),
+            errorBuilder: (_, __, ___) => DembeeLogoMark(
+              size: size,
+              borderRadius: size * 0.1,
+              showGlow: true,
+            ),
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          'ДЭМБЭЭ',
-          style: AppTheme.headingStyle.copyWith(
-            fontSize: size * 0.28,
-            color: AppTheme.primary,
-            letterSpacing: 2,
-          ),
+        SizedBox(height: size * 0.14),
+        _Wordmark(
+          fontSize: textSize,
+          showTagline: true,
         ),
       ],
     );

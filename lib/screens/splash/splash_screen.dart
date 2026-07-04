@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_constants.dart';
 import '../../services/firebase_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/dembee_logo.dart';
@@ -43,11 +42,12 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const DembeeLogoLarge(size: 100),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Text(
-              AppConstants.appNameEn,
+              'Онлайн дуудлага худалдаа',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white54,
+                    color: AppTheme.mutedForeground,
+                    fontSize: 14,
                   ),
             ),
             const SizedBox(height: 48),
