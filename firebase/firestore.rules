@@ -69,11 +69,22 @@ service cloud.firestore {
           resource.data.status == 'active'
           && request.resource.data.status == 'active'
           && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['price', 'lastBidder', 'lastBidUid', 'lastBidAmount', 'updatedAt'])
+              .hasOnly([
+                'price',
+                'lastBidder',
+                'lastBidUid',
+                'lastBidAmount',
+                'totalBids',
+                'phase',
+                'winCountdownEndsAt',
+                'updatedAt'
+              ])
           && request.resource.data.price == resource.data.price
               + request.resource.data.lastBidAmount
           && isValidBidIncrement(request.resource.data.lastBidAmount)
           && request.resource.data.lastBidUid == request.auth.uid
+          && request.resource.data.totalBids
+              == resource.data.get('totalBids', 0) + 1
         )
       );
 
