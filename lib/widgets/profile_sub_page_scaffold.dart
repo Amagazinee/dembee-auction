@@ -32,9 +32,13 @@ class ProfileSubPageScaffold extends StatelessWidget {
                         ? context.pop()
                         : context.go('/home'),
                   ),
-                  Text(
-                    title,
-                    style: AppTheme.headingStyle.copyWith(fontSize: 20),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: AppTheme.headingStyle.copyWith(fontSize: 20),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),

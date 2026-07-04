@@ -15,6 +15,7 @@
         { "fieldPath": "auctionId", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
+    },
     {
       "collectionGroup": "purchases",
       "queryScope": "COLLECTION",
