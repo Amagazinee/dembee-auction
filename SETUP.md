@@ -105,6 +105,31 @@ firebase use --add
 firebase deploy --only firestore:rules --project dembee-auction
 ```
 
+### 4.2 Cloud Functions (ялагч тодруулах + үе шилжилт)
+
+Дуудлагын lifecycle (ялагч тодруулах, 8 үе шилжих) **зөвхөн сервер** дээр ажиллана.
+
+```powershell
+cd C:\Users\user\dembee_app\functions
+npm install
+cd ..
+firebase deploy --only functions --project dembee-auction
+```
+
+**Функцүүд** (`asia-southeast1` бүс):
+| Функц | Зориулалт |
+|-------|-----------|
+| `processAuctionTask` | Task queue — яг цагт дуудлага шалгана |
+| `scheduleAuctionLifecycle` | Санал/үе өөрчлөгдөхөд дараагийн шалгалт төлөвлөнө |
+| `sweepAuctionLifecycle` | Минут бүр нөөц sweep (task алдагдсан тохиолдолд) |
+
+**Шаардлага:** Firebase Blaze (pay-as-you-go) төлөвлөгөө — Cloud Scheduler + Tasks ашиглана.
+
+Deploy дараа шинэ index (`status` + `winCountdownEndsAt`) publish хийнэ:
+```powershell
+firebase deploy --only firestore:indexes --project dembee-auction
+```
+
 ---
 
 ## 5. Firestore бүтэц
@@ -122,8 +147,11 @@ role: "user" | "admin"
 ```
 title: string
 price: number          // эхлэх үнэ (0 эсвэл бага)
-endsAt: timestamp      // дуусах цаг
+endsAt: timestamp      // дуудлагын эцсийн хязгаар (30 хоног)
 status: "pending" | "active" | "closed"
+phase: number           // 1–8
+phaseStartedAt: timestamp
+winCountdownEndsAt: timestamp
 lastBidder: string?
 lastBidUid: string?
 lastBidAmount: number

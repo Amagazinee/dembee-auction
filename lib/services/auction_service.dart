@@ -209,7 +209,6 @@ class AuctionService {
           FirestoreFields.lastBidUid: bidderUid,
           FirestoreFields.lastBidAmount: bidAmount,
           FirestoreFields.totalBids: totalBids + 1,
-          FirestoreFields.phase: currentPhase,
           FirestoreFields.winCountdownEndsAt: Timestamp.fromDate(winReset),
           FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
         });

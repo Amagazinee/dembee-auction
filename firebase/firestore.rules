@@ -98,7 +98,6 @@ service cloud.firestore {
                 'lastBidUid',
                 'lastBidAmount',
                 'totalBids',
-                'phase',
                 'winCountdownEndsAt',
                 'updatedAt'
               ])
@@ -108,6 +107,9 @@ service cloud.firestore {
           && request.resource.data.lastBidUid == request.auth.uid
           && request.resource.data.totalBids
               == resource.data.get('totalBids', 0) + 1
+          && request.resource.data.phase == resource.data.get('phase', 1)
+          && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['winnerUid', 'winnerName', 'finalPrice', 'phaseStartedAt'])
         )
       );
 
