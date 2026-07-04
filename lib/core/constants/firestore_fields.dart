@@ -24,6 +24,9 @@ class FirestoreFields {
   static const String finalPrice = 'finalPrice';
   static const String image = 'image';
   static const String retailValue = 'retailValue';
+  static const String description = 'description';
+  static const String category = 'category';
+  static const String bidIncrement = 'bidIncrement';
   static const String phase = 'phase';
   static const String phaseStartedAt = 'phaseStartedAt';
   static const String totalBids = 'totalBids';

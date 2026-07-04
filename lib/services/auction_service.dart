@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../core/constants/app_constants.dart';
+import '../core/constants/auction_categories.dart';
 import '../core/constants/auction_phases.dart';
 import '../core/constants/firestore_fields.dart';
 import '../core/errors/app_exception.dart';
@@ -82,6 +83,57 @@ class AuctionService {
         .map(
           (s) => s.docs.map(BidHistoryModel.fromFirestore).toList(),
         );
+  }
+
+  /// Админ — шинэ дуудлага үүсгэх (1-р үеэс эхэлнэ)
+  Future<String> createAuction({
+    required String title,
+    required String category,
+    required String description,
+    required int bidIncrement,
+    int? retailValue,
+    String? imageUrl,
+  }) async {
+    if (!AuctionBidIncrements.options.contains(bidIncrement)) {
+      throw const FirestoreException('Саналын алхам буруу байна');
+    }
+
+    final ref = _auctions.doc();
+    final now = DateTime.now();
+    final phaseConfig = AuctionPhases.forPhase(1);
+    final endsAt = now.add(const Duration(days: 30));
+    final winReset = now.add(phaseConfig.winCountdown);
+
+    final data = <String, dynamic>{
+      FirestoreFields.title: title.trim(),
+      FirestoreFields.price: 0,
+      FirestoreFields.endsAt: Timestamp.fromDate(endsAt),
+      FirestoreFields.status: AppConstants.statusActive,
+      FirestoreFields.phase: 1,
+      FirestoreFields.phaseStartedAt: FieldValue.serverTimestamp(),
+      FirestoreFields.totalBids: 0,
+      FirestoreFields.bidIncrement: bidIncrement,
+      FirestoreFields.category: category,
+      FirestoreFields.winCountdownEndsAt: Timestamp.fromDate(winReset),
+      FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+    };
+
+    if (description.trim().isNotEmpty) {
+      data[FirestoreFields.description] = description.trim();
+    }
+    if (retailValue != null && retailValue > 0) {
+      data[FirestoreFields.retailValue] = retailValue;
+    }
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      data[FirestoreFields.image] = imageUrl;
+    }
+
+    try {
+      await ref.set(data);
+      return ref.id;
+    } on FirebaseException catch (e) {
+      throw FirestoreException('Дуудлага нэмэхэд алдаа: ${e.message}');
+    }
   }
 
   /// Санал өгөх: 1 кредит хасах + үнэ ₮1–₮5 нэмэх

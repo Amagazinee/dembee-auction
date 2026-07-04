@@ -43,207 +43,225 @@ class UserMenuDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: AppTheme.primary.withValues(alpha: 0.3),
-                    child: Text(
-                      initial,
-                      style: AppTheme.headingStyle.copyWith(
-                        fontSize: 20,
-                        color: AppTheme.primary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          user.name,
-                          style: AppTheme.bodyStyle.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (user.isAdmin) ...[
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: AppTheme.primary),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor:
+                                AppTheme.primary.withValues(alpha: 0.3),
                             child: Text(
-                              'АДМИН',
-                              style: AppTheme.monoStyle.copyWith(fontSize: 9),
+                              initial,
+                              style: AppTheme.headingStyle.copyWith(
+                                fontSize: 20,
+                                color: AppTheme.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.name,
+                                  style: AppTheme.bodyStyle.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                if (user.isAdmin) ...[
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      border:
+                                          Border.all(color: AppTheme.primary),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      'АДМИН',
+                                      style: AppTheme.monoStyle.copyWith(
+                                        fontSize: 9,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                Text(
+                                  user.email,
+                                  style: AppTheme.bodyStyle.copyWith(
+                                    fontSize: 11,
+                                    color: AppTheme.mutedForeground,
+                                  ),
+                                ),
+                                Text(
+                                  user.phone,
+                                  style: AppTheme.bodyStyle.copyWith(
+                                    fontSize: 11,
+                                    color: AppTheme.mutedForeground,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
-                        Text(
-                          user.email,
-                          style: AppTheme.bodyStyle.copyWith(
-                            fontSize: 11,
-                            color: AppTheme.mutedForeground,
-                          ),
-                        ),
-                        Text(
-                          user.phone,
-                          style: AppTheme.bodyStyle.copyWith(
-                            fontSize: 11,
-                            color: AppTheme.mutedForeground,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppTheme.border),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'ҮЛДСЭН САНАЛ',
-                    style: AppTheme.bodyStyle.copyWith(
-                      fontSize: 10,
-                      letterSpacing: 1,
-                      color: AppTheme.mutedForeground,
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.border),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'ҮЛДСЭН САНАЛ',
+                            style: AppTheme.bodyStyle.copyWith(
+                              fontSize: 10,
+                              letterSpacing: 1,
+                              color: AppTheme.mutedForeground,
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              const Icon(Icons.bolt,
+                                  size: 14, color: AppTheme.primary),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${user.bidBalance} санал',
+                                style:
+                                    AppTheme.monoStyle.copyWith(fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Row(
-                    children: [
-                      const Icon(Icons.bolt, size: 14, color: AppTheme.primary),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${user.bidBalance} санал',
-                        style: AppTheme.monoStyle.copyWith(fontSize: 13),
+                    const SizedBox(height: 16),
+                    if (user.isAdmin) ...[
+                      _SectionHeader('удирдлага'),
+                      _MenuItem(
+                        icon: Icons.shield_outlined,
+                        label: 'Админ самбар',
+                        badge: 'ADMIN',
+                        onTap: () {
+                          onClose();
+                          context.go('/admin');
+                        },
                       ),
                     ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (user.isAdmin) ...[
-              _SectionHeader('удирдлага'),
-              _MenuItem(
-                icon: Icons.shield_outlined,
-                label: 'Админ самбар',
-                badge: 'ADMIN',
-                onTap: () {
-                  onClose();
-                  context.go('/admin');
-                },
-              ),
-            ],
-            _SectionHeader('данс'),
-            _MenuItem(
-              icon: Icons.bolt_outlined,
-              label: 'Санал багц авах',
-              onTap: () {
-                onClose();
-                context.go('/topup');
-              },
-            ),
-            _MenuItem(
-              icon: Icons.shopping_bag_outlined,
-              label: 'Дуудлага худалдааны түүх',
-              onTap: () {
-                onClose();
-                context.go('/purchases');
-              },
-            ),
-            _MenuItem(
-              icon: Icons.swap_horiz,
-              label: 'Гүйлгээний түүх',
-              onTap: () {
-                onClose();
-                context.go('/transactions');
-              },
-            ),
-            _SectionHeader('дэмжлэг'),
-            _MenuItem(
-              icon: Icons.chat_bubble_outline,
-              label: 'Санал хүсэлт',
-              onTap: () {
-                onClose();
-                context.go('/feedback');
-              },
-            ),
-            _MenuItem(
-              icon: Icons.help_outline,
-              label: 'Түгээмэл асуултууд',
-              onTap: () {
-                onClose();
-                context.go('/faq');
-              },
-            ),
-            _MenuItem(
-              icon: Icons.headset_mic_outlined,
-              label: 'Тусламж',
-              onTap: () {
-                onClose();
-                context.go('/help');
-              },
-            ),
-            _SectionHeader('нөхцөл'),
-            _MenuItem(
-              icon: Icons.shield_outlined,
-              label: 'Нууцлалын бодлого',
-              onTap: () {
-                onClose();
-                context.go('/privacy');
-              },
-            ),
-            _MenuItem(
-              icon: Icons.description_outlined,
-              label: 'Үйлчилгээний нөхцөл',
-              onTap: () {
-                onClose();
-                context.go('/terms');
-              },
-            ),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'Бүртгэлтэй: $dateStr',
-                style: AppTheme.bodyStyle.copyWith(
-                  fontSize: 11,
-                  color: AppTheme.mutedForeground,
+                    _SectionHeader('данс'),
+                    _MenuItem(
+                      icon: Icons.bolt_outlined,
+                      label: 'Санал багц авах',
+                      onTap: () {
+                        onClose();
+                        context.go('/topup');
+                      },
+                    ),
+                    _MenuItem(
+                      icon: Icons.shopping_bag_outlined,
+                      label: 'Дуудлага худалдааны түүх',
+                      onTap: () {
+                        onClose();
+                        context.go('/purchases');
+                      },
+                    ),
+                    _MenuItem(
+                      icon: Icons.swap_horiz,
+                      label: 'Гүйлгээний түүх',
+                      onTap: () {
+                        onClose();
+                        context.go('/transactions');
+                      },
+                    ),
+                    _SectionHeader('дэмжлэг'),
+                    _MenuItem(
+                      icon: Icons.chat_bubble_outline,
+                      label: 'Санал хүсэлт',
+                      onTap: () {
+                        onClose();
+                        context.go('/feedback');
+                      },
+                    ),
+                    _MenuItem(
+                      icon: Icons.help_outline,
+                      label: 'Түгээмэл асуултууд',
+                      onTap: () {
+                        onClose();
+                        context.go('/faq');
+                      },
+                    ),
+                    _MenuItem(
+                      icon: Icons.headset_mic_outlined,
+                      label: 'Тусламж',
+                      onTap: () {
+                        onClose();
+                        context.go('/help');
+                      },
+                    ),
+                    _SectionHeader('нөхцөл'),
+                    _MenuItem(
+                      icon: Icons.shield_outlined,
+                      label: 'Нууцлалын бодлого',
+                      onTap: () {
+                        onClose();
+                        context.go('/privacy');
+                      },
+                    ),
+                    _MenuItem(
+                      icon: Icons.description_outlined,
+                      label: 'Үйлчилгээний нөхцөл',
+                      onTap: () {
+                        onClose();
+                        context.go('/terms');
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        'Бүртгэлтэй: $dateStr',
+                        style: AppTheme.bodyStyle.copyWith(
+                          fontSize: 11,
+                          color: AppTheme.mutedForeground,
+                        ),
+                      ),
+                    ),
+                    _MenuItem(
+                      icon: Icons.delete_outline,
+                      label: 'Бүртгэл устгах',
+                      color: AppTheme.destructive,
+                      onTap: onClose,
+                    ),
+                    _MenuItem(
+                      icon: Icons.logout,
+                      label: 'Гарах',
+                      onTap: () async {
+                        onClose();
+                        await AuthService().logout();
+                        if (context.mounted) context.go('/login');
+                      },
+                    ),
+                  ],
                 ),
               ),
             ),
-            _MenuItem(
-              icon: Icons.delete_outline,
-              label: 'Бүртгэл устгах',
-              color: AppTheme.destructive,
-              onTap: onClose,
-            ),
-            _MenuItem(
-              icon: Icons.logout,
-              label: 'Гарах',
-              onTap: () async {
-                onClose();
-                await AuthService().logout();
-                if (context.mounted) context.go('/login');
-              },
-            ),
-            const SizedBox(height: 16),
           ],
         ),
       ),
