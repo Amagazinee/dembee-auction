@@ -85,6 +85,13 @@ class AuctionService {
         );
   }
 
+  /// Админ — бүх саналын түүх
+  Stream<List<BidHistoryModel>> watchAllBidHistory() {
+    return _history.snapshots().map(
+          (s) => s.docs.map(BidHistoryModel.fromFirestore).toList(),
+        );
+  }
+
   /// Админ — шинэ дуудлага үүсгэх (1-р үеэс эхэлнэ)
   Future<String> createAuction({
     required String title,

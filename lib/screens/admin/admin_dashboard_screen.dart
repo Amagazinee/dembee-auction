@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/utils/formatters.dart';
 import '../../models/auction_model.dart';
+import '../../models/bid_history_model.dart';
+import '../../models/purchase_model.dart';
+import '../../models/user_model.dart';
 import '../../services/auction_service.dart';
 import '../../services/credits_service.dart';
 import '../../theme/app_theme.dart';
@@ -149,7 +152,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ),
           body: switch (_tab) {
-            0 => _OverviewTab(auctionService: _auctionService),
+            0 => _OverviewTab(
+                auctionService: _auctionService,
+                creditsService: _creditsService,
+              ),
             1 => AdminAuctionsTab(auctionService: _auctionService),
             2 => AdminUsersTab(creditsService: _creditsService),
             3 => AdminTransactionsTab(creditsService: _creditsService),
@@ -169,196 +175,288 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 }
 
 class _OverviewTab extends StatelessWidget {
-  const _OverviewTab({required this.auctionService});
+  const _OverviewTab({
+    required this.auctionService,
+    required this.creditsService,
+  });
 
   final AuctionService auctionService;
+  final CreditsService creditsService;
+
+  static bool _isToday(DateTime dt) {
+    final now = DateTime.now();
+    return dt.year == now.year &&
+        dt.month == now.month &&
+        dt.day == now.day;
+  }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<AuctionModel>>(
       stream: auctionService.watchAuctions(),
-      builder: (context, snap) {
-        if (!snap.hasData) {
+      builder: (context, auctionSnap) {
+        if (!auctionSnap.hasData) {
           return const LoadingWidget();
         }
 
-        final auctions = snap.data!;
-        final active =
-            auctions.where((a) => a.isActive && !a.hasEnded).length;
-        final totalBids =
-            auctions.fold<int>(0, (s, a) => s + a.totalBids);
+        return StreamBuilder<List<UserModel>>(
+          stream: creditsService.watchAllUsersList(),
+          builder: (context, userSnap) {
+            if (!userSnap.hasData) {
+              return const LoadingWidget();
+            }
 
-        final phaseCounts = List.filled(8, 0);
-        for (final a in auctions.where((x) => x.isActive && !x.hasEnded)) {
-          final p = a.currentPhase.clamp(1, 8) - 1;
-          phaseCounts[p]++;
-        }
+            return StreamBuilder<List<PurchaseModel>>(
+              stream: creditsService.watchAllCompletedPurchases(),
+              builder: (context, purchaseSnap) {
+                if (!purchaseSnap.hasData) {
+                  return const LoadingWidget();
+                }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              LayoutBuilder(
-                builder: (context, c) {
-                  final cols = c.maxWidth > 600 ? 4 : 2;
-                  return GridView.count(
-                    crossAxisCount: cols,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 1.6,
-                    children: [
-                      _AdminStatCard(
-                        value: '4',
-                        label: 'Нийт хэрэглэгч',
-                        sub: '+12 өнөөдөр',
-                        color: const Color(0xFF60A5FA),
-                      ),
-                      _AdminStatCard(
-                        value: '$active',
-                        label: 'Идэвхтэй дуудлага',
-                        sub: '${formatNumber(totalBids)} нийт санал',
-                        color: AppTheme.primary,
-                      ),
-                      _AdminStatCard(
-                        value: '₮373,000',
-                        label: 'Нийт орлого',
-                        sub: 'Цэнэглэлт',
-                        color: const Color(0xFF22C55E),
-                      ),
-                      _AdminStatCard(
-                        value: '621',
-                        label: 'Өнөөдрийн санал',
-                        sub: 'Идэвхтэй',
-                        color: const Color(0xFFA855F7),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.card,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: AppTheme.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Дуудлагын үе хуваарилалт',
-                      style: AppTheme.headingStyle.copyWith(fontSize: 16),
-                    ),
-                    const SizedBox(height: 16),
-                    ...List.generate(8, (i) {
-                      const colors = [
-                        Color(0xFF22D3EE),
-                        Color(0xFF3B82F6),
-                        Color(0xFF8B5CF6),
-                        Color(0xFFA855F7),
-                        Color(0xFFEC4899),
-                        Color(0xFFF97316),
-                        Color(0xFFEAB308),
-                        Color(0xFFEF4444),
-                      ];
-                      final count = phaseCounts[i];
-                      final max = phaseCounts.reduce((a, b) => a > b ? a : b);
-                      final flex = max == 0 ? 0 : count;
+                return StreamBuilder<List<BidHistoryModel>>(
+                  stream: auctionService.watchAllBidHistory(),
+                  builder: (context, bidSnap) {
+                    if (!bidSnap.hasData) {
+                      return const LoadingWidget();
+                    }
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 48,
-                              child: Text(
-                                '${i + 1}-р үе',
-                                style: AppTheme.bodyStyle.copyWith(
-                                  fontSize: 12,
-                                  color: AppTheme.mutedForeground,
+                    final auctions = auctionSnap.data!;
+                    final users = userSnap.data!;
+                    final purchases = purchaseSnap.data!;
+                    final bids = bidSnap.data!;
+
+                    final ongoing =
+                        auctions.where((a) => a.isOngoing).toList();
+                    final activeCount = ongoing.length;
+                    final finishedCount =
+                        auctions.where((a) => a.isFinished).length;
+                    final totalBids =
+                        auctions.fold<int>(0, (s, a) => s + a.totalBids);
+                    final usersToday =
+                        users.where((u) => _isToday(u.createdAt)).length;
+                    final totalRevenue =
+                        purchases.fold<int>(0, (s, p) => s + p.amount);
+                    final bidsToday =
+                        bids.where((b) => _isToday(b.createdAt)).length;
+
+                    final usersById = {
+                      for (final u in users) u.uid: u,
+                    };
+
+                    final phaseCounts = List.filled(8, 0);
+                    for (final a in ongoing) {
+                      final p = a.currentPhase.clamp(1, 8) - 1;
+                      phaseCounts[p]++;
+                    }
+
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          LayoutBuilder(
+                            builder: (context, c) {
+                              final cols = c.maxWidth > 600 ? 4 : 2;
+                              return GridView.count(
+                                crossAxisCount: cols,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                mainAxisSpacing: 10,
+                                crossAxisSpacing: 10,
+                                childAspectRatio: 1.6,
+                                children: [
+                                  _AdminStatCard(
+                                    value: '${users.length}',
+                                    label: 'Нийт хэрэглэгч',
+                                    sub: usersToday > 0
+                                        ? '+$usersToday өнөөдөр'
+                                        : 'Өнөөдөр шинэ бүртгэлгүй',
+                                    color: const Color(0xFF60A5FA),
+                                  ),
+                                  _AdminStatCard(
+                                    value: '$activeCount',
+                                    label: 'Идэвхтэй дуудлага',
+                                    sub:
+                                        '$finishedCount дууссан · ${formatNumber(totalBids)} санал',
+                                    color: AppTheme.primary,
+                                  ),
+                                  _AdminStatCard(
+                                    value: formatPrice(totalRevenue),
+                                    label: 'Нийт орлого',
+                                    sub: '${purchases.length} гүйлгээ',
+                                    color: const Color(0xFF22C55E),
+                                  ),
+                                  _AdminStatCard(
+                                    value: '$bidsToday',
+                                    label: 'Өнөөдрийн санал',
+                                    sub: 'Дуудлага худалдаа',
+                                    color: const Color(0xFFA855F7),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppTheme.card,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: AppTheme.border),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Дуудлагын үе хуваарилалт',
+                                  style: AppTheme.headingStyle.copyWith(
+                                    fontSize: 16,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 16),
+                                ...List.generate(8, (i) {
+                                  const colors = [
+                                    Color(0xFF22D3EE),
+                                    Color(0xFF3B82F6),
+                                    Color(0xFF8B5CF6),
+                                    Color(0xFFA855F7),
+                                    Color(0xFFEC4899),
+                                    Color(0xFFF97316),
+                                    Color(0xFFEAB308),
+                                    Color(0xFFEF4444),
+                                  ];
+                                  final count = phaseCounts[i];
+                                  final max = phaseCounts.reduce(
+                                    (a, b) => a > b ? a : b,
+                                  );
+                                  final flex = max == 0 ? 0 : count;
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 48,
+                                          child: Text(
+                                            '${i + 1}-р үе',
+                                            style: AppTheme.bodyStyle.copyWith(
+                                              fontSize: 12,
+                                              color: AppTheme.mutedForeground,
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(2),
+                                            child: Row(
+                                              children: [
+                                                if (flex > 0)
+                                                  Expanded(
+                                                    flex: flex,
+                                                    child: Container(
+                                                      height: 8,
+                                                      color: colors[i],
+                                                    ),
+                                                  ),
+                                                if (max - flex > 0)
+                                                  Expanded(
+                                                    flex: max - flex,
+                                                    child: Container(
+                                                      height: 8,
+                                                      color: AppTheme.muted,
+                                                    ),
+                                                  ),
+                                                if (max == 0)
+                                                  Expanded(
+                                                    child: Container(
+                                                      height: 8,
+                                                      color: AppTheme.muted,
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          '$count',
+                                          style: AppTheme.monoStyle.copyWith(
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              ],
                             ),
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(2),
-                                child: Row(
-                                  children: [
-                                    if (flex > 0)
-                                      Expanded(
-                                        flex: flex,
-                                        child: Container(
-                                          height: 8,
-                                          color: colors[i],
-                                        ),
-                                      ),
-                                    if (max - flex > 0)
-                                      Expanded(
-                                        flex: max - flex,
-                                        child: Container(
-                                          height: 8,
-                                          color: AppTheme.muted,
-                                        ),
-                                      ),
-                                    if (max == 0)
-                                      Expanded(
-                                        child: Container(
-                                          height: 8,
-                                          color: AppTheme.muted,
-                                        ),
-                                      ),
-                                  ],
+                          ),
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppTheme.card,
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: AppTheme.border),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Сүүлийн гүйлгээнүүд',
+                                  style: AppTheme.headingStyle.copyWith(
+                                    fontSize: 16,
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(height: 12),
+                                if (purchases.isEmpty)
+                                  Text(
+                                    'Гүйлгээ байхгүй',
+                                    style: AppTheme.bodyStyle.copyWith(
+                                      fontSize: 13,
+                                      color: AppTheme.mutedForeground,
+                                    ),
+                                  )
+                                else
+                                  ...purchases.take(5).toList().asMap().entries.map(
+                                    (entry) {
+                                      final p = entry.value;
+                                      final user = usersById[p.userUid];
+                                      final userLabel =
+                                          user?.name.isNotEmpty == true
+                                              ? user!.name
+                                              : 'Хэрэглэгч';
+                                      return Column(
+                                        children: [
+                                          if (entry.key > 0)
+                                            const Divider(
+                                              color: AppTheme.border,
+                                              height: 20,
+                                            ),
+                                          _TransactionRow(
+                                            title:
+                                                '$userLabel · ${p.bidCount} санал',
+                                            sub:
+                                                '${formatDateTime(p.createdAt)} · ${p.paymentLabel}',
+                                            amount:
+                                                '+${formatPrice(p.amount)}',
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '$count',
-                              style: AppTheme.monoStyle.copyWith(fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.card,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: AppTheme.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Сүүлийн гүйлгээнүүд',
-                      style: AppTheme.headingStyle.copyWith(fontSize: 16),
-                    ),
-                    const SizedBox(height: 12),
-                    _TransactionRow(
-                      title: 'Санал багц — 200 санал',
-                      sub: '2024-12-20 · QPay',
-                      amount: '+₮110,000',
-                    ),
-                    const Divider(color: AppTheme.border, height: 20),
-                    _TransactionRow(
-                      title: 'Санал багц — 40 санал',
-                      sub: '2024-12-19 · Khan Bank',
-                      amount: '+₮30,000',
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
         );
       },
     );
