@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/errors/app_exception.dart';
 import '../../services/auth_service.dart';
+import '../../services/firebase_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth_split_layout.dart';
 
@@ -31,6 +32,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
+    if (!FirebaseService.isInitialized) {
+      setState(() => _errorMessage =
+          'Firebase холбогдоогүй байна. Тохиргоо хэсэг рүү очиж flutterfire configure хийнэ үү.');
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -46,6 +53,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) context.go('/home');
     } on AppException catch (e) {
       setState(() => _errorMessage = e.message);
+    } catch (e) {
+      setState(() => _errorMessage = 'Алдаа гарлаа: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -94,7 +103,9 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _isLoading ? null : _login,
+              onPressed: (_isLoading || !FirebaseService.isInitialized)
+                  ? null
+                  : _login,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/auth_state_notifier.dart';
+import '../services/firebase_service.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/auction/auction_detail_screen.dart';
 import '../screens/auth/login_screen.dart';
@@ -22,6 +23,14 @@ class AppRouter {
           initialLocation: '/',
           refreshListenable: authNotifier,
           redirect: (context, state) {
+            if (!FirebaseService.isInitialized) {
+              final location = state.matchedLocation;
+              if (location != '/' && location != '/setup') {
+                return '/setup';
+              }
+              return null;
+            }
+
             final isLoggedIn = authNotifier.isLoggedIn;
             final location = state.matchedLocation;
 
