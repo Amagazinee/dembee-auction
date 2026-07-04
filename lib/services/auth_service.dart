@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/constants/firestore_fields.dart';
@@ -130,6 +131,9 @@ class AuthService {
       'operation-not-allowed' =>
         'Имэйл/нууц үгээр нэвтрэх идэвхгүй байна. Firebase Console → Authentication → Email/Password идэвхжүүлнэ үү',
       'network-request-failed' => 'Сүлжээний алдаа. Интернэт холболтоо шалгана уу',
+      _ when code.contains('api-key-not-valid') =>
+        'Firebase API түлхүүр буруу байна. Терминалд flutterfire configure ажиллуулаад '
+        '${kIsWeb ? "Web" : "энэ"} платформыг сонгож, аппыг дахин ажиллуулна уу',
       _ => 'Нэвтрэх алдаа: $code',
     };
   }
