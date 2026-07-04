@@ -79,6 +79,32 @@ flutterfire configure
 
 **Чухал:** Rules болон Indexes тавихгүй бол бүртгэл/санал өгөх ажиллахгүй.
 
+### 4.1 Firebase CLI (terminal-аас deploy)
+
+```powershell
+# 1. Нэг удаа нэвтрэх
+firebase login
+
+# 2. Төсөл сонгох (репо дотор .firebaserc байвал алгасаж болно)
+cd C:\Users\user\dembee_app
+firebase use dembee-auction
+
+# 3. Rules болон indexes publish
+firebase deploy --only firestore:rules
+firebase deploy --only firestore:indexes
+```
+
+`No currently active project` алдаа гарвал:
+```powershell
+firebase use --add
+```
+→ жагсаалтаас **dembee-auction** сонго → alias: `default`
+
+Эсвэл шууд:
+```powershell
+firebase deploy --only firestore:rules --project dembee-auction
+```
+
 ---
 
 ## 5. Firestore бүтэц

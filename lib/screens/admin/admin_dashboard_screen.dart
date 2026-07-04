@@ -9,6 +9,8 @@ import '../../theme/app_theme.dart';
 import '../../widgets/dembee_logo.dart';
 import '../../widgets/loading_widget.dart';
 import 'admin_add_auction_tab.dart';
+import 'admin_transactions_tab.dart';
+import 'admin_users_tab.dart';
 
 /// Figma Admin Panel
 class AdminDashboardScreen extends StatefulWidget {
@@ -149,6 +151,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           body: switch (_tab) {
             0 => _OverviewTab(auctionService: _auctionService),
             1 => AdminAddAuctionTab(auctionService: _auctionService),
+            2 => AdminUsersTab(creditsService: _creditsService),
+            3 => AdminTransactionsTab(creditsService: _creditsService),
             _ => Center(
                 child: Text(
                   '${_tabLabels[_tab]} — удахгүй',
