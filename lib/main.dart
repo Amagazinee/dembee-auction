@@ -12,12 +12,17 @@ import 'theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Фонтыг эхлээд татаж авах — emulator дээр гацахаас сэргийлнэ
-  await GoogleFonts.pendingFonts([
-    GoogleFonts.fraunces(),
-    GoogleFonts.manrope(),
-    GoogleFonts.jetBrainsMono(),
-  ]);
+  // Эмулятор/сүлжээ алдаатай үед Google Fonts татахгүй — системийн фонт ашиглана
+  try {
+    await GoogleFonts.pendingFonts([
+      GoogleFonts.fraunces(),
+      GoogleFonts.manrope(),
+      GoogleFonts.jetBrainsMono(),
+    ]).timeout(const Duration(seconds: 8));
+  } catch (e) {
+    debugPrint('Font ачаалах алдаа (fallback фонт): $e');
+    GoogleFonts.config.allowRuntimeFetching = false;
+  }
 
   final authNotifier = AuthStateNotifier();
 
