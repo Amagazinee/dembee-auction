@@ -43,3 +43,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+// flutterfire configure → android/app/google-services.json үүсгэнэ
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}

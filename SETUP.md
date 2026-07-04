@@ -43,12 +43,22 @@ flutter pub get
 
 ```bash
 dart pub global activate flutterfire_cli
+```
+
+**Windows (PowerShell)** — `flutterfire` олдохгүй бол:
+```powershell
+$env:Path += ";$env:LOCALAPPDATA\Pub\Cache\bin"
+dart pub global run flutterfire_cli:flutterfire configure
+```
+
+**macOS/Linux:**
+```bash
 flutterfire configure
 ```
 
 - Firebase төслөө сонгоно
-- Platform: Android (iOS хэрэв хэрэгтэй бол)
-- Энэ нь `lib/firebase_options.dart` файлыг **автоматаар** үүсгэнэ
+- Platform: **Android** (Chrome ашиглахгүй бол Web хэрэггүй)
+- Энэ нь `lib/firebase_options.dart` болон `android/app/google-services.json` файлыг **автоматаар** үүсгэнэ
 
 ### 3.3 Android
 
@@ -121,9 +131,44 @@ lastBidAmount: 0
 
 ## 7. Апп ажиллуулах
 
+### Android эмулятор (зөвлөмж)
+
 ```bash
+flutter devices
 flutter run
 ```
+
+### Windows — эмулятор алдаа (`Can't find service: package`)
+
+Ихэвчлэн эмулятор бүрэн ачааллаагүй эсвэл `gphone16k` (16KB) эмулятор эвдэрсэн үед гарна.
+
+**Автомат засах скрипт:**
+```powershell
+cd C:\Users\user\dembee_app
+powershell -ExecutionPolicy Bypass -File scripts\windows-emulator-fix.ps1
+```
+
+**Гараар:**
+1. Android Studio → **Device Manager** → эмулятор **Stop**
+2. **Cold Boot** (эсвэл **Wipe Data**)
+3. `gphone16k` эмуляторыг устгаад шинээр үүсгэх:
+   - **Pixel 7** + **API 34** (x86_64, **16k биш**)
+4. Эмулятор нүүр дэлгэц гарч 1–2 минут хүлээнэ
+5. ADB (бүтэн зам):
+```powershell
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" kill-server
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" start-server
+& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" devices
+```
+6. `flutter run`
+
+### Chrome (Web) — зөвхөн шаардлагатай бол
+
+```bash
+flutter run -d chrome
+```
+
+Web ашиглавал `flutterfire configure` дээр **Web** платформыг сонгоно.
 
 ---
 
