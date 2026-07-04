@@ -33,6 +33,37 @@ class AuthService {
     return UserModel.fromFirestore(doc);
   }
 
+  /// Auth байгаа ч Firestore профайл байхгүй үед сэргээнэ
+  Future<UserModel> _ensureUserProfile({
+    required String email,
+    String name = '',
+    String phone = '',
+  }) async {
+    final user = currentUser;
+    if (user == null) {
+      throw const AuthException('Нэвтрээгүй байна');
+    }
+
+    final profile = UserModel(
+      uid: user.uid,
+      name: name.isNotEmpty
+          ? name
+          : (user.displayName?.isNotEmpty == true
+              ? user.displayName!
+              : email.split('@').first),
+      phone: phone,
+      email: email,
+      createdAt: DateTime.now(),
+    );
+
+    await _firestore
+        .collection(AppConstants.usersCollection)
+        .doc(user.uid)
+        .set(profile.toFirestore());
+
+    return profile;
+  }
+
   Future<void> register({
     required String name,
     required String phone,
@@ -86,19 +117,32 @@ class AuthService {
         password: password,
       );
 
-      final profile = await getCurrentUserProfile();
+      UserModel? profile;
+      try {
+        profile = await getCurrentUserProfile();
+      } on FirebaseException catch (e) {
+        if (e.code == 'permission-denied') {
+          throw FirestoreException(_mapFirestoreError(e));
+        }
+        rethrow;
+      }
+
       if (profile == null) {
-        await _auth.signOut();
-        throw const AuthException(
-          'Бүртгэлийн мэдээлэл олдсонгүй. Firebase Console → Authentication '
-          'дээрээс энэ имэйлийг устгаад дахин бүртгүүлнэ үү.',
-        );
+        try {
+          profile = await _ensureUserProfile(email: email.trim());
+        } on FirebaseException catch (e) {
+          await _auth.signOut();
+          if (e.code == 'permission-denied') {
+            throw FirestoreException(
+              'Firestore профайл үүсгэж чадсангүй. firebase/firestore.rules файлыг '
+              'Firebase Console → Firestore → Rules дээр Publish хийнэ үү',
+            );
+          }
+          throw FirestoreException(_mapFirestoreError(e));
+        }
       }
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapAuthError(e.code));
-    } on FirebaseException catch (e) {
-      await _auth.signOut();
-      throw FirestoreException(_mapFirestoreError(e));
     }
   }
 
