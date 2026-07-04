@@ -69,6 +69,23 @@ class UserMenuDrawer extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
+                        if (user.isAdmin) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppTheme.primary),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'АДМИН',
+                              style: AppTheme.monoStyle.copyWith(fontSize: 9),
+                            ),
+                          ),
+                        ],
                         Text(
                           user.email,
                           style: AppTheme.bodyStyle.copyWith(

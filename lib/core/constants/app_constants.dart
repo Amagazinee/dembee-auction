@@ -5,6 +5,15 @@ class AppConstants {
   static const String appName = 'Дэмбээ';
   static const String appNameEn = 'Dembee Auction';
 
+  /// Бүртгэл үүсэхэд автоматаар admin role өгөх имэйлүүд
+  static const List<String> adminSeedEmails = [
+    'admin@dembee.mn',
+  ];
+
+  static bool isAdminSeedEmail(String email) {
+    return adminSeedEmails.contains(email.trim().toLowerCase());
+  }
+
   // Firestore collection нэрүүд
   static const String usersCollection = 'users';
   static const String auctionsCollection = 'auctions';
