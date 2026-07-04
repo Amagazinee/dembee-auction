@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/errors/app_exception.dart';
 import '../../services/auth_service.dart';
+import '../../services/firebase_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth_split_layout.dart';
 
@@ -37,6 +38,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _register() async {
+    if (!FirebaseService.isInitialized) {
+      setState(() => _errorMessage =
+          'Firebase холбогдоогүй байна. Тохиргоо хэсэг рүү очиж flutterfire configure хийнэ үү.');
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -70,6 +77,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (!FirebaseService.isInitialized) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.destructive.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.destructive),
+                ),
+                child: Text(
+                  'Firebase Web тохируулаагүй байна. Терминалд flutterfire configure '
+                  'ажиллуулаад Web сонгож, аппыг дахин ажиллуулна уу.',
+                  style: AppTheme.bodyStyle.copyWith(color: AppTheme.destructive),
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
             AuthTextField(
               controller: _nameController,
               hint: 'Нэр, овог',
@@ -134,7 +157,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ],
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: _isLoading ? null : _register,
+              onPressed: (_isLoading || !FirebaseService.isInitialized)
+                  ? null
+                  : _register,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
