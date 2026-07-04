@@ -48,6 +48,27 @@ class CreditsService {
         });
   }
 
+  /// Админ — бүх амжилттай санал багц худалдан авалт
+  Stream<List<PurchaseModel>> watchAllCompletedPurchases() {
+    return _purchases.snapshots().map((s) {
+      final list = s.docs
+          .map(PurchaseModel.fromFirestore)
+          .where((p) => p.status == 'completed')
+          .toList();
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
+    });
+  }
+
+  /// Админ — хэрэглэгчийн нэр/имэйл lookup
+  Stream<Map<String, UserModel>> watchAllUsers() {
+    return _users.snapshots().map((s) {
+      return {
+        for (final doc in s.docs) doc.id: UserModel.fromFirestore(doc),
+      };
+    });
+  }
+
   /// Туршилт — төлбөргүй багц худалдан авах (QPay холбогдоогүй)
   Future<void> purchasePackageTest(BidPackage package) async {
     final uid = _uid;
