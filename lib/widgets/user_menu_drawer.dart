@@ -145,13 +145,18 @@ class UserMenuDrawer extends StatelessWidget {
             _MenuItem(
               icon: Icons.shopping_bag_outlined,
               label: 'Худалдан авалтын түүх',
-              badgeCount: 3,
-              onTap: onClose,
+              onTap: () {
+                onClose();
+                context.go('/purchases');
+              },
             ),
             _MenuItem(
               icon: Icons.swap_horiz,
               label: 'Гүйлгээний түүх',
-              onTap: onClose,
+              onTap: () {
+                onClose();
+                context.go('/transactions');
+              },
             ),
             _SectionHeader('дэмжлэг'),
             _MenuItem(
