@@ -15,6 +15,12 @@ class FirebaseService {
   static Future<void> initialize() async {
     if (_initialized) return;
 
+    if (!isConfigured) {
+      throw const ConfigException(
+        'Firebase тохируулагдаагүй байна. flutterfire configure ажиллуулна уу.',
+      );
+    }
+
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
@@ -32,9 +38,30 @@ class FirebaseService {
     }
   }
 
-  /// Firebase тохируулагдсан эсэхийг шалгах
+  /// Одоогийн платформ (Android / Web / iOS) дээр Firebase тохируулагдсан эсэх
   static bool get isConfigured {
-    const placeholder = 'YOUR_PROJECT_ID';
-    return !DefaultFirebaseOptions.android.projectId.contains(placeholder);
+    try {
+      return !_hasPlaceholder(DefaultFirebaseOptions.currentPlatform);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static bool _hasPlaceholder(FirebaseOptions options) {
+    const markers = ['YOUR_API_KEY', 'YOUR_APP_ID', 'YOUR_PROJECT_ID'];
+    final values = [options.apiKey, options.appId, options.projectId];
+    return values.any(
+      (value) => markers.any((marker) => value.contains(marker)),
+    );
+  }
+
+  static String get platformSetupHint {
+    if (kIsWeb) {
+      return 'Та Chrome (Web) дээр ажиллуулж байна.\n'
+          'flutterfire configure ажиллуулахдаа **Web** платформыг сонгоно уу.';
+    }
+    return defaultTargetPlatform == TargetPlatform.iOS
+        ? 'flutterfire configure ажиллуулахдаа **iOS** платформыг сонгоно уу.'
+        : 'flutterfire configure ажиллуулахдаа **Android** платформыг сонгоно уу.';
   }
 }
