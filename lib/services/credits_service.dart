@@ -69,6 +69,15 @@ class CreditsService {
     });
   }
 
+  /// Админ — бүх хэрэглэгчийн жагсаалт (шинэ бүртгэл эхэнд)
+  Stream<List<UserModel>> watchAllUsersList() {
+    return _users.snapshots().map((s) {
+      final list = s.docs.map(UserModel.fromFirestore).toList();
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
+    });
+  }
+
   /// Туршилт — төлбөргүй багц худалдан авах (QPay холбогдоогүй)
   Future<void> purchasePackageTest(BidPackage package) async {
     final uid = _uid;
