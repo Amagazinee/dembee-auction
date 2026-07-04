@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 import '../core/constants/app_constants.dart';
+import '../core/constants/firestore_fields.dart';
 import '../core/errors/app_exception.dart';
 import '../models/user_model.dart';
 
@@ -52,12 +53,14 @@ class AuthService {
         throw const AuthException('Хэрэглэгч үүсгэж чадсангүй');
       }
 
+      final isSeedAdmin = AppConstants.isAdminSeedEmail(email);
       final profile = UserModel(
         uid: createdUser.uid,
         name: name.trim(),
         phone: phone.trim(),
         email: email.trim(),
         createdAt: DateTime.now(),
+        role: isSeedAdmin ? 'admin' : 'user',
       );
 
       await _firestore
@@ -94,6 +97,8 @@ class AuthService {
           'дээрээс энэ имэйлийг устгаад дахин бүртгүүлнэ үү.',
         );
       }
+
+      await _promoteSeedAdminIfNeeded(profile);
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapAuthError(e.code));
     } on FirebaseException catch (e) {
@@ -116,6 +121,23 @@ class AuthService {
       await _auth.sendPasswordResetEmail(email: trimmed);
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapAuthError(e.code));
+    }
+  }
+
+  Future<void> _promoteSeedAdminIfNeeded(UserModel profile) async {
+    final user = currentUser;
+    if (user == null || profile.isAdmin) return;
+
+    final email = user.email;
+    if (email == null || !AppConstants.isAdminSeedEmail(email)) return;
+
+    try {
+      await _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(user.uid)
+          .update({FirestoreFields.role: 'admin'});
+    } on FirebaseException catch (e) {
+      debugPrint('Admin promote skipped: ${e.code}');
     }
   }
 

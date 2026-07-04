@@ -165,10 +165,25 @@ powershell -ExecutionPolicy Bypass -File scripts\windows-emulator-fix.ps1
 - Firestore rules-ийг `allow read, write: if true` гэж үлдээх
 
 ### Admin эрх өгөх
+
+**Арга 1 — Seed admin бүртгэл (хурдан)**
+
+1. Апп дээр **Бүртгүүлэх** → имэйл: `admin@dembee.mn`, нууц үг: `admin123` (эсвэл өөр)
+2. Firestore rules publish хийсэн эсэхийг шалгана (`firebase deploy --only firestore:rules`)
+3. Нэвтэрсний дараа:
+   - App bar дээр **АДМИН** badge
+   - **Шинэ дуудлага нэмэх** товч
+   - Цэс → **удирдлага** → **Админ самбар**
+
+**Арга 2 — Одоо байгаа аккаунтыг admin болгох**
+
 Firestore → `users` → таны UID document → `role` талбар:
 ```
 role: "admin"
 ```
+(Console-оос гараар засна — хэрэглэгч өөрөө role өөрчилж чадахгүй)
+
+**Өөр admin имэйл нэмэх:** `lib/core/constants/app_constants.dart` дотор `adminSeedEmails` жагсаалтад нэмж, `firebase/firestore.rules` дотор `isSeedAdminEmail()` функцийг шинэчилнэ.
 
 ---
 

@@ -16,6 +16,11 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    function isSeedAdminEmail() {
+      return isSignedIn()
+        && request.auth.token.email == 'admin@dembee.mn';
+    }
+
     function isValidBidIncrement(amount) {
       return amount in [1, 2, 3, 4, 5];
     }
@@ -29,12 +34,30 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isOwner(userId)
         && request.resource.data.keys().hasAll(['name', 'phone', 'email', 'createdAt'])
-        && request.resource.data.role == 'user'
-        && (!('bidBalance' in request.resource.data)
-            || request.resource.data.bidBalance == 0);
+        && (
+          (
+            request.resource.data.role == 'user'
+            && (!('bidBalance' in request.resource.data)
+                || request.resource.data.bidBalance == 0)
+          )
+          ||
+          (
+            isSeedAdminEmail()
+            && request.resource.data.role == 'admin'
+            && (!('bidBalance' in request.resource.data)
+                || request.resource.data.bidBalance == 0)
+          )
+        );
       allow update: if isOwner(userId) && (
         (
           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'createdAt'])
+        )
+        ||
+        (
+          isSeedAdminEmail()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
+          && request.resource.data.role == 'admin'
+          && resource.data.get('role', 'user') == 'user'
         )
         ||
         (
