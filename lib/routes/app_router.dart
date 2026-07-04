@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/auth_state_notifier.dart';
 import '../services/firebase_service.dart';
+import '../screens/admin/admin_add_auction_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/auction/auction_detail_screen.dart';
 import '../screens/auth/login_screen.dart';
@@ -102,6 +103,10 @@ class AppRouter {
             GoRoute(
               path: '/terms',
               builder: (context, state) => const TermsScreen(),
+            ),
+            GoRoute(
+              path: '/admin/add-auction',
+              builder: (context, state) => const AdminAddAuctionScreen(),
             ),
             GoRoute(
               path: '/admin',

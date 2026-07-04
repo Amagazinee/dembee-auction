@@ -55,6 +55,12 @@ class AuctionModel {
   bool get isClosed => status == AppConstants.statusClosed;
   bool get hasEnded => DateTime.now().isAfter(endsAt);
 
+  /// Админ — одоо явагдаж буй дуудлага
+  bool get isOngoing => isActive && !hasEnded;
+
+  /// Админ — дууссан дуудлага
+  bool get isFinished => isClosed || hasEnded;
+
   Duration get remaining => endsAt.difference(DateTime.now());
 
   int get currentPhase => phase.clamp(1, AuctionPhases.totalPhases);

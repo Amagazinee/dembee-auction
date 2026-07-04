@@ -86,7 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
             user: user,
             showAdminBadge: isAdmin,
             showAddAuction: isAdmin,
-            onAddAuction: () => context.go('/admin?tab=1'),
+            onAddAuction: () => context.push('/admin/add-auction'),
           ),
           body: StreamBuilder<List<AuctionModel>>(
             stream: _auctionService.watchAuctions(),
