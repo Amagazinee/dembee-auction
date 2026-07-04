@@ -33,7 +33,7 @@ class AuthService {
     return UserModel.fromFirestore(doc);
   }
 
-  /// Auth байгаа ч Firestore профайл байхгүй үед сэргээнэ
+  /// Auth байгаа ч Firestore профайл байхгүй үед шинээр үүсгэнэ
   Future<UserModel> _ensureUserProfile({
     required String email,
     String name = '',
@@ -42,6 +42,15 @@ class AuthService {
     final user = currentUser;
     if (user == null) {
       throw const AuthException('Нэвтрээгүй байна');
+    }
+
+    final ref = _firestore
+        .collection(AppConstants.usersCollection)
+        .doc(user.uid);
+
+    final existing = await ref.get();
+    if (existing.exists) {
+      return UserModel.fromFirestore(existing);
     }
 
     final profile = UserModel(
@@ -56,11 +65,7 @@ class AuthService {
       createdAt: DateTime.now(),
     );
 
-    await _firestore
-        .collection(AppConstants.usersCollection)
-        .doc(user.uid)
-        .set(profile.toFirestore());
-
+    await ref.set(profile.toFirestore());
     return profile;
   }
 
@@ -117,29 +122,14 @@ class AuthService {
         password: password,
       );
 
-      UserModel? profile;
+      // Firestore профайл байхгүй бол үүсгэхийг оролдоно — амжилтгүй ч нэвтрэлтийг цуцлахгүй
       try {
-        profile = await getCurrentUserProfile();
+        var profile = await getCurrentUserProfile();
+        if (profile == null) {
+          await _ensureUserProfile(email: email.trim());
+        }
       } on FirebaseException catch (e) {
-        if (e.code == 'permission-denied') {
-          throw FirestoreException(_mapFirestoreError(e));
-        }
-        rethrow;
-      }
-
-      if (profile == null) {
-        try {
-          profile = await _ensureUserProfile(email: email.trim());
-        } on FirebaseException catch (e) {
-          await _auth.signOut();
-          if (e.code == 'permission-denied') {
-            throw FirestoreException(
-              'Firestore профайл үүсгэж чадсангүй. firebase/firestore.rules файлыг '
-              'Firebase Console → Firestore → Rules дээр Publish хийнэ үү',
-            );
-          }
-          throw FirestoreException(_mapFirestoreError(e));
-        }
+        debugPrint('Профайл шалгах/үүсгэх алдаа: ${e.code} ${e.message}');
       }
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapAuthError(e.code));
