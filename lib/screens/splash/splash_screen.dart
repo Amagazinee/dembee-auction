@@ -29,7 +29,8 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
-    final isLoggedIn = FirebaseAuth.instance.currentUser != null;
+    final isLoggedIn = FirebaseService.isInitialized &&
+        FirebaseAuth.instance.currentUser != null;
     context.go(isLoggedIn ? '/home' : '/login');
   }
 
