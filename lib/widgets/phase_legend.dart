@@ -5,7 +5,9 @@ import '../theme/app_theme.dart';
 
 /// Figma "ҮЕ ДЭС ДАРАА · ЯЛАГЧ ТОДРОХ ХУГАЦАА" ribbon
 class PhaseLegend extends StatelessWidget {
-  const PhaseLegend({super.key});
+  const PhaseLegend({super.key, this.embedded = false});
+
+  final bool embedded;
 
   static const List<Color> _colors = [
     Color(0xFF3B82F6),
@@ -21,12 +23,14 @@ class PhaseLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      margin: embedded
+          ? EdgeInsets.zero
+          : const EdgeInsets.fromLTRB(16, 0, 16, 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: embedded ? Colors.transparent : AppTheme.card,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: AppTheme.border),
+        border: embedded ? null : Border.all(color: AppTheme.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

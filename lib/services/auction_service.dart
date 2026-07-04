@@ -196,13 +196,6 @@ class AuctionService {
         final currentPrice = (data[FirestoreFields.price] as num?)?.toInt() ?? 0;
         final currentPhase =
             (data[FirestoreFields.phase] as num?)?.toInt() ?? 1;
-        final auctionIncrement =
-            (data[FirestoreFields.bidIncrement] as num?)?.toInt() ?? 1;
-        if (bidAmount != auctionIncrement) {
-          throw FirestoreException(
-            'Энэ дуудлагын санал +₮$auctionIncrement байна',
-          );
-        }
         final totalBids =
             (data[FirestoreFields.totalBids] as num?)?.toInt() ?? 0;
         final phaseConfig = AuctionPhases.forPhase(currentPhase);

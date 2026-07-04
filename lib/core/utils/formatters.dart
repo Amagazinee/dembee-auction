@@ -1,3 +1,50 @@
+/// Ялагч тодрох тооллого — MM.SS.mmm
+String formatWinCountdownMs(Duration duration) {
+  if (duration.isNegative) return '00.000';
+  final totalMs = duration.inMilliseconds;
+  final minutes = totalMs ~/ 60000;
+  final seconds = (totalMs % 60000) ~/ 1000;
+  final millis = totalMs % 1000;
+  return '${minutes.toString().padLeft(2, '0')}.'
+      '${seconds.toString().padLeft(2, '0')}.'
+      '${millis.toString().padLeft(3, '0')}';
+}
+
+/// Үе хаагдах тооллого — өдөр : цаг : мин : сек
+String formatPhaseCountdown(Duration duration) {
+  if (duration.isNegative) {
+    return '00 : 00 : 00 : 00';
+  }
+  final days = duration.inDays;
+  final hours = duration.inHours.remainder(24);
+  final minutes = duration.inMinutes.remainder(60);
+  final seconds = duration.inSeconds.remainder(60);
+  return '${days.toString().padLeft(2, '0')} : '
+      '${hours.toString().padLeft(2, '0')} : '
+      '${minutes.toString().padLeft(2, '0')} : '
+      '${seconds.toString().padLeft(2, '0')}';
+}
+
+/// Саналын цаг — цаг:мин:сек.долио
+String formatBidClock(DateTime dt) {
+  final h = dt.hour.toString().padLeft(2, '0');
+  final m = dt.minute.toString().padLeft(2, '0');
+  final s = dt.second.toString().padLeft(2, '0');
+  final cs = (dt.millisecond ~/ 10).toString().padLeft(2, '0');
+  return '$h:$m:$s.$cs';
+}
+
+/// Үеийн цагийн хүрээ — 21:30:00-22:10:00
+String formatPhaseTimeRange(DateTime start, Duration duration) {
+  final end = start.add(duration);
+  String t(DateTime d) {
+    return '${d.hour.toString().padLeft(2, '0')}:'
+        '${d.minute.toString().padLeft(2, '0')}:'
+        '${d.second.toString().padLeft(2, '0')}';
+  }
+  return '${t(start)}-${t(end)}';
+}
+
 /// Цагийн формат — countdown-д ашиглана
 String formatDuration(Duration duration) {
   if (duration.isNegative) return '00:00:00';
