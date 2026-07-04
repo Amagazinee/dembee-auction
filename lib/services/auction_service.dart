@@ -92,6 +92,9 @@ class AuctionService {
         );
   }
 
+  /// Админ — шинэ doc ID (зураг upload-ийн өмнө)
+  String createAuctionId() => _auctions.doc().id;
+
   /// Админ — шинэ дуудлага үүсгэх (1-р үеэс эхэлнэ)
   Future<String> createAuction({
     required String title,
@@ -100,12 +103,13 @@ class AuctionService {
     required int bidIncrement,
     int? retailValue,
     String? imageUrl,
+    String? docId,
   }) async {
     if (!AuctionBidIncrements.options.contains(bidIncrement)) {
       throw const FirestoreException('Саналын алхам буруу байна');
     }
 
-    final ref = _auctions.doc();
+    final ref = docId != null ? _auctions.doc(docId) : _auctions.doc();
     final now = DateTime.now();
     final phaseConfig = AuctionPhases.forPhase(1);
     final endsAt = now.add(const Duration(days: 30));
@@ -192,6 +196,13 @@ class AuctionService {
         final currentPrice = (data[FirestoreFields.price] as num?)?.toInt() ?? 0;
         final currentPhase =
             (data[FirestoreFields.phase] as num?)?.toInt() ?? 1;
+        final auctionIncrement =
+            (data[FirestoreFields.bidIncrement] as num?)?.toInt() ?? 1;
+        if (bidAmount != auctionIncrement) {
+          throw FirestoreException(
+            'Энэ дуудлагын санал +₮$auctionIncrement байна',
+          );
+        }
         final totalBids =
             (data[FirestoreFields.totalBids] as num?)?.toInt() ?? 0;
         final phaseConfig = AuctionPhases.forPhase(currentPhase);
@@ -224,6 +235,61 @@ class AuctionService {
       });
     } on FirebaseException catch (e) {
       throw FirestoreException('Санал өгөхөд алдаа: ${e.message}');
+    }
+  }
+
+  /// Админ — ялагч гараар тодруулах (Cloud Functions deploy хийгээгүй үед)
+  Future<void> declareWinnerAdmin(String auctionId) async {
+    final ref = _auctions.doc(auctionId);
+
+    try {
+      await _firestore.runTransaction((transaction) async {
+        final snap = await transaction.get(ref);
+        if (!snap.exists) {
+          throw const FirestoreException('Дуудлага олдсонгүй');
+        }
+
+        final data = snap.data()!;
+        final status = data[FirestoreFields.status] as String? ?? '';
+        if (status != AppConstants.statusActive) {
+          throw const FirestoreException('Дуудлага идэвхгүй байна');
+        }
+
+        final lastBidUid = data[FirestoreFields.lastBidUid] as String?;
+        if (lastBidUid == null || lastBidUid.isEmpty) {
+          throw const FirestoreException(
+            'Санал байхгүй тул ялагч тодруулах боломжгүй',
+          );
+        }
+
+        final price = (data[FirestoreFields.price] as num?)?.toInt() ?? 0;
+
+        transaction.update(ref, {
+          FirestoreFields.status: AppConstants.statusClosed,
+          FirestoreFields.winnerUid: lastBidUid,
+          FirestoreFields.winnerName:
+              data[FirestoreFields.lastBidder] as String? ?? '',
+          FirestoreFields.finalPrice: price,
+          FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+        });
+      });
+    } on FirebaseException catch (e) {
+      throw FirestoreException('Ялагч тодруулахад алдаа: ${e.message}');
+    }
+  }
+
+  /// Зураг URL шинэчлэх (админ)
+  Future<void> updateAuctionImage({
+    required String auctionId,
+    required String imageUrl,
+  }) async {
+    try {
+      await _auctions.doc(auctionId).update({
+        FirestoreFields.image: imageUrl,
+        FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+      });
+    } on FirebaseException catch (e) {
+      throw FirestoreException('Зураг хадгалахад алдаа: ${e.message}');
     }
   }
 }

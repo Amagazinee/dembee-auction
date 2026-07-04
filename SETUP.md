@@ -109,6 +109,30 @@ firebase deploy --only firestore:rules --project dembee-auction
 
 Дуудлагын lifecycle (ялагч тодруулах, 8 үе шилжих) **зөвхөн сервер** дээр ажиллана.
 
+#### Blaze төлөвлөгөө (заавал)
+
+Cloud Functions, Cloud Scheduler, Cloud Tasks deploy хийхийн тулд төсөл **Blaze (pay-as-you-go)** байх ёстой. Spark (үнэгүй) дээр дараах алдаа гарна:
+
+```
+Your project must be on the Blaze plan...
+Required API artifactregistry.googleapis.com can't be enabled
+```
+
+**Шилжих:**
+1. https://console.firebase.google.com/project/dembee-auction/usage/details
+2. **Upgrade project** → Blaze сонго
+3. Төлбөрийн карт холбоно (Google Cloud billing)
+
+**Зардал:** Beta (10–20 хэрэглэгч) ихэвчлэн сарын **$0–5** орчим. Ихэнх үйлчилгээнд үнэгүй хязгаар үлдэнэ. Google Cloud Console → **Billing → Budgets & alerts** дээр сарын $10 хязгаар тавьж болно.
+
+**Blaze-гүйгээр одоо хийж болох зүйлс:**
+```powershell
+firebase deploy --only firestore:rules,firestore:indexes,storage --project dembee-auction
+```
+Апп, санал өгөх, админ самбар, **зураг upload** ажиллана. Ялагч тодруулах: админ → Дуудлага tab → «Ялагч тодруулах» товч (Cloud Functions deploy хийхээс өмнө).
+
+#### Deploy (Blaze дээр)
+
 ```powershell
 cd C:\Users\user\dembee_app\functions
 npm install
@@ -123,12 +147,36 @@ firebase deploy --only functions --project dembee-auction
 | `scheduleAuctionLifecycle` | Санал/үе өөрчлөгдөхөд дараагийн шалгалт төлөвлөнө |
 | `sweepAuctionLifecycle` | Минут бүр нөөц sweep (task алдагдсан тохиолдолд) |
 
-**Шаардлага:** Firebase Blaze (pay-as-you-go) төлөвлөгөө — Cloud Scheduler + Tasks ашиглана.
-
 Deploy дараа шинэ index (`status` + `winCountdownEndsAt`) publish хийнэ:
 ```powershell
 firebase deploy --only firestore:indexes --project dembee-auction
 ```
+
+### 4.3 Firebase Storage (дуудлагын зураг)
+
+Spark төлөвлөгөөнд ажиллана (5GB хүртэл үнэгүй).
+
+```powershell
+firebase deploy --only storage --project dembee-auction
+```
+
+Админ «Шинэ дуудлага нэмэх» дээр зураг сонгоход `auctions/{id}/cover.jpg` руу upload хийнэ.
+
+---
+
+#### Локал тест (Blaze шаардлагагүй)
+
+Functions-ийг компьютер дээрээ турших:
+
+```powershell
+cd C:\Users\user\dembee_app\functions
+npm install
+npm run build
+cd ..
+firebase emulators:start --only functions,firestore --project dembee-auction
+```
+
+Аппыг emulator-той холбохын тулд `lib/main.dart` эсвэл `firebase_service.dart` дээр Firestore/Functions emulator host тохируулах шаардлагатай (зөвхөн dev).
 
 ---
 

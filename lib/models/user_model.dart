@@ -48,6 +48,21 @@ class UserModel {
     };
   }
 
+  UserModel copyWith({
+    String? name,
+    String? phone,
+  }) {
+    return UserModel(
+      uid: uid,
+      name: name ?? this.name,
+      phone: phone ?? this.phone,
+      email: email,
+      createdAt: createdAt,
+      role: role,
+      bidBalance: bidBalance,
+    );
+  }
+
   static DateTime _parseTimestamp(dynamic value) {
     if (value is Timestamp) return value.toDate();
     if (value is DateTime) return value;

@@ -42,14 +42,16 @@ class _HomeScreenState extends State<HomeScreen> {
       final profile = await _authService.getCurrentUserProfile();
       await _auctionService.placeBid(
         auctionId: auction.id,
-        bidAmount: 1,
+        bidAmount: auction.bidIncrement,
         bidderName: profile?.name ?? user.email ?? 'Хэрэглэгч',
         bidderUid: user.uid,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${auction.title} — +1₮ санал илгээлээ'),
+            content: Text(
+              '${auction.title} — +${auction.bidIncrement}₮ санал илгээлээ',
+            ),
             backgroundColor: AppTheme.secondary,
             behavior: SnackBarBehavior.floating,
           ),
