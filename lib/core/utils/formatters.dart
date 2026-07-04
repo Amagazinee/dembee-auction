@@ -33,6 +33,23 @@ String formatNumber(int value) {
 /// Үнийг ₮ форматаар харуулах
 String formatPrice(int price) => '${formatNumber(price)}₮';
 
+/// Огноо — 2026-03-15
+String formatDate(DateTime dt) {
+  final m = dt.month.toString().padLeft(2, '0');
+  final d = dt.day.toString().padLeft(2, '0');
+  return '${dt.year}-$m-$d';
+}
+
+/// Огноо цаг — 2026-03-15 14:30
+String formatDateTime(DateTime dt) {
+  final y = dt.year;
+  final m = dt.month.toString().padLeft(2, '0');
+  final d = dt.day.toString().padLeft(2, '0');
+  final h = dt.hour.toString().padLeft(2, '0');
+  final min = dt.minute.toString().padLeft(2, '0');
+  return '$y-$m-$d $h:$min';
+}
+
 /// Хэмнэлт — Figma "₮3.49сая хэмнэлт"
 String formatSavings(int savings) {
   if (savings <= 0) return '';

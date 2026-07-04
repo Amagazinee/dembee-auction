@@ -14,6 +14,8 @@ import '../screens/profile/feedback_screen.dart';
 import '../screens/profile/help_screen.dart';
 import '../screens/profile/legal_screens.dart';
 import '../screens/profile/profile_screen.dart';
+import '../screens/profile/purchases_screen.dart';
+import '../screens/profile/transactions_screen.dart';
 import '../screens/setup/setup_screen.dart';
 import '../screens/splash/splash_screen.dart';
 
@@ -72,6 +74,14 @@ class AppRouter {
             GoRoute(
               path: '/profile',
               builder: (context, state) => const ProfileScreen(),
+            ),
+            GoRoute(
+              path: '/purchases',
+              builder: (context, state) => const PurchasesScreen(),
+            ),
+            GoRoute(
+              path: '/transactions',
+              builder: (context, state) => const TransactionsScreen(),
             ),
             GoRoute(
               path: '/help',

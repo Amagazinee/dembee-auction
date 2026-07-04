@@ -5,6 +5,7 @@ import '../core/constants/app_constants.dart';
 import '../core/constants/bid_packages.dart';
 import '../core/constants/firestore_fields.dart';
 import '../core/errors/app_exception.dart';
+import '../models/purchase_model.dart';
 import '../models/user_model.dart';
 
 class CreditsService {
@@ -30,6 +31,18 @@ class CreditsService {
       if (!doc.exists) return null;
       return UserModel.fromFirestore(doc);
     });
+  }
+
+  /// Худалдан авалтын түүх
+  Stream<List<PurchaseModel>> watchUserPurchases() {
+    final uid = _uid;
+    if (uid == null) return Stream.value([]);
+
+    return _purchases
+        .where(FirestoreFields.userUid, isEqualTo: uid)
+        .orderBy(FirestoreFields.createdAt, descending: true)
+        .snapshots()
+        .map((s) => s.docs.map(PurchaseModel.fromFirestore).toList());
   }
 
   /// Туршилт — төлбөргүй багц худалдан авах (QPay холбогдоогүй)
