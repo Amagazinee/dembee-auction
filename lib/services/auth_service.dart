@@ -111,6 +111,63 @@ class AuthService {
     await _auth.signOut();
   }
 
+  Future<void> updateProfile({
+    required String name,
+    required String phone,
+  }) async {
+    final user = currentUser;
+    if (user == null) {
+      throw const AuthException('Нэвтрээгүй байна');
+    }
+
+    final trimmedName = name.trim();
+    final trimmedPhone = phone.trim();
+    if (trimmedName.isEmpty) {
+      throw const AuthException('Нэр оруулна уу');
+    }
+    if (trimmedPhone.isEmpty) {
+      throw const AuthException('Утасны дугаар оруулна уу');
+    }
+
+    try {
+      await _firestore.collection(AppConstants.usersCollection).doc(user.uid).update({
+        FirestoreFields.name: trimmedName,
+        FirestoreFields.phone: trimmedPhone,
+      });
+    } on FirebaseException catch (e) {
+      throw FirestoreException(_mapFirestoreError(e));
+    }
+  }
+
+  Future<void> deleteAccount({required String password}) async {
+    final user = currentUser;
+    if (user == null) {
+      throw const AuthException('Нэвтрээгүй байна');
+    }
+
+    final email = user.email;
+    if (email == null || email.isEmpty) {
+      throw const AuthException('Имэйл олдсонгүй');
+    }
+
+    try {
+      await user.reauthenticateWithCredential(
+        EmailAuthProvider.credential(email: email, password: password),
+      );
+
+      await _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(user.uid)
+          .delete();
+
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapAuthError(e.code));
+    } on FirebaseException catch (e) {
+      throw FirestoreException(_mapFirestoreError(e));
+    }
+  }
+
   Future<void> sendPasswordResetEmail({required String email}) async {
     final trimmed = email.trim();
     if (trimmed.isEmpty) {
@@ -160,6 +217,8 @@ class AuthService {
       'user-not-found' => 'Хэрэглэгч олдсонгүй',
       'wrong-password' => 'Нууц үг буруу байна',
       'invalid-credential' => 'Имэйл эсвэл нууц үг буруу байна',
+      'requires-recent-login' =>
+        'Аюулгүй байдлын үүднээс дахин нэвтэрч, үйлдлээ давтана уу',
       'too-many-requests' => 'Хэт олон удаа оролдлоо. Түр хүлээнэ үү',
       'operation-not-allowed' =>
         'Имэйл/нууц үгээр нэвтрэх идэвхгүй. Firebase Console → Authentication → Email/Password идэвхжүүлнэ үү',

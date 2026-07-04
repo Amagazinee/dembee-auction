@@ -7,13 +7,19 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/constants/auction_categories.dart';
 import '../../core/errors/app_exception.dart';
 import '../../services/auction_service.dart';
+import '../../services/storage_service.dart';
 import '../../theme/app_theme.dart';
 
 /// Figma — Шинэ дуудлага нэмэх (тусдаа дэлгэц)
 class AdminAddAuctionScreen extends StatefulWidget {
-  const AdminAddAuctionScreen({super.key, this.auctionService});
+  const AdminAddAuctionScreen({
+    super.key,
+    this.auctionService,
+    this.storageService,
+  });
 
   final AuctionService? auctionService;
+  final StorageService? storageService;
 
   @override
   State<AdminAddAuctionScreen> createState() => _AdminAddAuctionScreenState();
@@ -22,6 +28,8 @@ class AdminAddAuctionScreen extends StatefulWidget {
 class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
   late final AuctionService _auctionService =
       widget.auctionService ?? AuctionService();
+  late final StorageService _storageService =
+      widget.storageService ?? StorageService();
 
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
@@ -71,12 +79,23 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
     setState(() => _submitting = true);
 
     try {
+      final auctionId = _auctionService.createAuctionId();
+      String? imageUrl;
+
+      if (_imageFile != null) {
+        imageUrl = await _storageService.uploadAuctionImage(
+          auctionId: auctionId,
+          file: _imageFile!,
+        );
+      }
+
       await _auctionService.createAuction(
+        docId: auctionId,
         title: _titleController.text,
         category: _category,
         description: _descriptionController.text,
         bidIncrement: _bidIncrement,
-        imageUrl: null,
+        imageUrl: imageUrl,
       );
 
       if (!mounted) return;

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_constants.dart';
 import '../../core/errors/app_exception.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/auction_model.dart';
@@ -120,7 +119,10 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                                   currentUserUid: user?.uid,
                                   myBidCount: myCount,
                                   onQuickBid: canBid
-                                      ? () => _placeBid(auction, 1)
+                                      ? () => _placeBid(
+                                            auction,
+                                            auction.bidIncrement,
+                                          )
                                       : null,
                                 ),
                                 if (canBid) ...[
@@ -133,24 +135,19 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 10),
-                                  Row(
-                                    children:
-                                        AppConstants.bidIncrements.map((a) {
-                                      return Expanded(
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 3,
-                                          ),
-                                          child: ElevatedButton(
-                                            onPressed: _isBidding
-                                                ? null
-                                                : () =>
-                                                    _placeBid(auction, a),
-                                            child: Text('+$a₮'),
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: _isBidding
+                                          ? null
+                                          : () => _placeBid(
+                                                auction,
+                                                auction.bidIncrement,
+                                              ),
+                                      child: Text(
+                                        '+₮${auction.bidIncrement} санал өгөх',
+                                      ),
+                                    ),
                                   ),
                                 ],
                                 if (_bidError != null)

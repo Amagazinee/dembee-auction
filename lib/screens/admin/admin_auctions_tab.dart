@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/errors/app_exception.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/auction_model.dart';
 import '../../services/auction_service.dart';
@@ -58,6 +59,7 @@ class AdminAuctionsTab extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: _AdminAuctionCard(
                       auction: a,
+                      auctionService: auctionService,
                       onTap: () => context.push('/auction/${a.id}'),
                     ),
                   )),
@@ -75,6 +77,7 @@ class AdminAuctionsTab extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: _AdminAuctionCard(
                       auction: a,
+                      auctionService: auctionService,
                       onTap: () => context.push('/auction/${a.id}'),
                     ),
                   )),
@@ -215,17 +218,76 @@ class _EmptyHint extends StatelessWidget {
   }
 }
 
-class _AdminAuctionCard extends StatelessWidget {
+class _AdminAuctionCard extends StatefulWidget {
   const _AdminAuctionCard({
     required this.auction,
+    required this.auctionService,
     required this.onTap,
   });
 
   final AuctionModel auction;
+  final AuctionService auctionService;
   final VoidCallback onTap;
 
   @override
+  State<_AdminAuctionCard> createState() => _AdminAuctionCardState();
+}
+
+class _AdminAuctionCardState extends State<_AdminAuctionCard> {
+  bool _declaring = false;
+
+  Future<void> _declareWinner() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.card,
+        title: const Text('Ялагч тодруулах'),
+        content: Text(
+          '«${widget.auction.title}» дуудлагын сүүлийн санал өгсөн '
+          '${widget.auction.lastBidder ?? 'хэрэглэгчийг'} ялагч болгох уу?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Болих'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Тодруулах'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _declaring = true);
+    try {
+      await widget.auctionService.declareWinnerAdmin(widget.auction.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ялагч амжилттай тодорлоо'),
+          backgroundColor: AppTheme.secondary,
+        ),
+      );
+    } on AppException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppTheme.destructive,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _declaring = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final auction = widget.auction;
     final ongoing = auction.isOngoing;
     final statusLabel = ongoing ? 'Идэвхтэй' : 'Дууссан';
     final statusColor =
@@ -235,23 +297,27 @@ class _AdminAuctionCard extends StatelessWidget {
       color: AppTheme.card,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: AppTheme.border),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _AuctionThumb(imageUrl: auction.image),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _AuctionThumb(imageUrl: auction.image),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -375,9 +441,40 @@ class _AdminAuctionCard extends StatelessWidget {
                         ),
                       ),
                     ],
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
+              if (ongoing && auction.lastBidUid != null) ...[
+                const Divider(height: 1, color: AppTheme.border),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _declaring ? null : _declareWinner,
+                      icon: _declaring
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.emoji_events_outlined, size: 18),
+                      label: Text(
+                        _declaring ? 'Тодруулж байна...' : 'Ялагч тодруулах',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primary,
+                        side: BorderSide(
+                          color: AppTheme.primary.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

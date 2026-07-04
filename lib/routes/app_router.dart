@@ -10,6 +10,8 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/topup/topup_screen.dart';
+import '../screens/profile/delete_account_screen.dart';
+import '../screens/profile/edit_profile_screen.dart';
 import '../screens/profile/faq_screen.dart';
 import '../screens/profile/feedback_screen.dart';
 import '../screens/profile/help_screen.dart';
@@ -83,6 +85,14 @@ class AppRouter {
             GoRoute(
               path: '/transactions',
               builder: (context, state) => const TransactionsScreen(),
+            ),
+            GoRoute(
+              path: '/edit-profile',
+              builder: (context, state) => const EditProfileScreen(),
+            ),
+            GoRoute(
+              path: '/delete-account',
+              builder: (context, state) => const DeleteAccountScreen(),
             ),
             GoRoute(
               path: '/help',

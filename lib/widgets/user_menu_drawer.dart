@@ -167,6 +167,14 @@ class UserMenuDrawer extends StatelessWidget {
                     ],
                     _SectionHeader('данс'),
                     _MenuItem(
+                      icon: Icons.person_outline,
+                      label: 'Профайл засах',
+                      onTap: () {
+                        onClose();
+                        context.go('/edit-profile');
+                      },
+                    ),
+                    _MenuItem(
                       icon: Icons.bolt_outlined,
                       label: 'Санал багц авах',
                       onTap: () {
@@ -247,7 +255,10 @@ class UserMenuDrawer extends StatelessWidget {
                       icon: Icons.delete_outline,
                       label: 'Бүртгэл устгах',
                       color: AppTheme.destructive,
-                      onTap: onClose,
+                      onTap: () {
+                        onClose();
+                        context.go('/delete-account');
+                      },
                     ),
                     _MenuItem(
                       icon: Icons.logout,
