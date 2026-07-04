@@ -24,12 +24,13 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future<void>.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
-    if (!FirebaseService.isConfigured) {
+    if (!FirebaseService.isConfigured || !FirebaseService.isInitialized) {
       context.go('/setup');
       return;
     }
 
-    final isLoggedIn = FirebaseAuth.instance.currentUser != null;
+    final isLoggedIn = FirebaseService.isInitialized &&
+        FirebaseAuth.instance.currentUser != null;
     context.go(isLoggedIn ? '/home' : '/login');
   }
 

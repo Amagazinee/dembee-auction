@@ -43,12 +43,22 @@ flutter pub get
 
 ```bash
 dart pub global activate flutterfire_cli
+```
+
+**Windows (PowerShell):**
+```powershell
+$env:Path += ";$env:LOCALAPPDATA\Pub\Cache\bin"
+dart pub global run flutterfire_cli:flutterfire configure
+```
+
+**macOS/Linux:**
+```bash
 flutterfire configure
 ```
 
 - Firebase төслөө сонгоно
-- Platform: Android (iOS хэрэв хэрэгтэй бол)
-- Энэ нь `lib/firebase_options.dart` файлыг **автоматаар** үүсгэнэ
+- Platform: **Android** (Chrome ашиглахгүй бол Web хэрэггүй)
+- Үүсэх файлууд: `lib/firebase_options.dart`, `android/app/google-services.json`
 
 ### 3.3 Android
 
@@ -60,11 +70,14 @@ flutterfire configure
 
 ---
 
-## 4. Firestore Security Rules
+## 4. Firestore Security Rules болон Indexes
 
-Firebase Console → Firestore → Rules хэсэгт `firebase/firestore.rules` файлын агуулгыг хуулж тавина.
+**Rules:** Firebase Console → Firestore → Rules → `firebase/firestore.rules` хуулж **Publish**
 
-**Чухал:** Rules тавихгүй бол хэн ч өгөгдөл устгаж, үнэ өөрчилж болно.
+**Indexes:** Firebase Console → Firestore → Indexes → `firebase/firestore.indexes.json` ашиглана
+эсвэл `firebase deploy --only firestore:indexes` (Firebase CLI суулгасан бол)
+
+**Чухал:** Rules болон Indexes тавихгүй бол бүртгэл/санал өгөх ажиллахгүй.
 
 ---
 
@@ -122,8 +135,20 @@ lastBidAmount: 0
 ## 7. Апп ажиллуулах
 
 ```bash
+flutter devices
 flutter run
 ```
+
+Android эмулятор сонгоно. Chrome сонгохгүй (Web тохируулаагүй бол).
+
+### Windows — эмулятор алдаа
+
+`Can't find service: package` гарвал:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\windows-emulator-fix.ps1
+```
+
+Дараа нь `flutter run`. `gphone16k` эмуляторыг устгаад **Pixel 7 + API 34** ашиглана.
 
 ---
 

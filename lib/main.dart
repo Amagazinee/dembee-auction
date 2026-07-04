@@ -19,13 +19,15 @@ void main() async {
     GoogleFonts.jetBrainsMono(),
   ]);
 
+  final authNotifier = AuthStateNotifier();
+
   try {
     await FirebaseService.initialize();
+    authNotifier.attach();
   } on ConfigException catch (e) {
     debugPrint('Firebase config алдаа: ${e.message}');
   }
 
-  final authNotifier = AuthStateNotifier();
   final appRouter = AppRouter(authNotifier: authNotifier);
 
   runApp(DembeeApp(router: appRouter.router));
