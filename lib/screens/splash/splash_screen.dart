@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_constants.dart';
 import '../../services/firebase_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/dembee_logo.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -41,11 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.gavel_rounded,
-              size: 80,
-              color: AppTheme.gold,
-            ),
+            const DembeeLogoLarge(size: 120),
             const SizedBox(height: 24),
             Text(
               AppConstants.appName,
