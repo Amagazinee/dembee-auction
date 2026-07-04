@@ -40,9 +40,12 @@ class CreditsService {
 
     return _purchases
         .where(FirestoreFields.userUid, isEqualTo: uid)
-        .orderBy(FirestoreFields.createdAt, descending: true)
         .snapshots()
-        .map((s) => s.docs.map(PurchaseModel.fromFirestore).toList());
+        .map((s) {
+          final list = s.docs.map(PurchaseModel.fromFirestore).toList();
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   /// Туршилт — төлбөргүй багц худалдан авах (QPay холбогдоогүй)

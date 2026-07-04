@@ -38,9 +38,12 @@ class AuctionService {
 
     return _auctions
         .where(FirestoreFields.winnerUid, isEqualTo: uid)
-        .orderBy(FirestoreFields.endsAt, descending: true)
         .snapshots()
-        .map((s) => s.docs.map(AuctionModel.fromFirestore).toList());
+        .map((s) {
+          final list = s.docs.map(AuctionModel.fromFirestore).toList();
+          list.sort((a, b) => b.endsAt.compareTo(a.endsAt));
+          return list;
+        });
   }
 
   Stream<AuctionModel?> watchAuction(String docId) {

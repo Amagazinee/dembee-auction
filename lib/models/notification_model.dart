@@ -14,4 +14,22 @@ class AppNotification {
   final String body;
   final String timeAgo;
   final bool read;
+
+  AppNotification copyWith({
+    String? id,
+    String? kind,
+    String? title,
+    String? body,
+    String? timeAgo,
+    bool? read,
+  }) {
+    return AppNotification(
+      id: id ?? this.id,
+      kind: kind ?? this.kind,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      timeAgo: timeAgo ?? this.timeAgo,
+      read: read ?? this.read,
+    );
+  }
 }

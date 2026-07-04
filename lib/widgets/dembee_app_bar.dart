@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/constants/mock_notifications.dart';
 import '../models/user_model.dart';
+import '../providers/notification_notifier.dart';
 import '../theme/app_theme.dart';
 import 'dembee_logo.dart';
 import 'notif_drawer.dart';
@@ -33,7 +33,6 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
     final initial = user?.name.isNotEmpty == true
         ? user!.name[0].toUpperCase()
         : 'C';
-    final unread = MockNotifications.unreadCount;
 
     return AppBar(
       backgroundColor: AppTheme.background,
@@ -108,27 +107,34 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
               icon: const Icon(Icons.notifications_outlined),
               onPressed: () => showNotifPanel(context),
             ),
-            if (unread > 0)
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  width: 16,
-                  height: 16,
-                  alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: AppTheme.destructive,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '$unread',
-                    style: AppTheme.monoStyle.copyWith(
-                      fontSize: 9,
-                      color: Colors.white,
+            ListenableBuilder(
+              listenable: NotificationNotifier.instance,
+              builder: (context, _) {
+                final unread = NotificationNotifier.instance.unreadCount;
+                if (unread <= 0) return const SizedBox.shrink();
+
+                return Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    width: 16,
+                    height: 16,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.destructive,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '$unread',
+                      style: AppTheme.monoStyle.copyWith(
+                        fontSize: 9,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
-              ),
+                );
+              },
+            ),
           ],
         ),
         Padding(
