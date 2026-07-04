@@ -105,7 +105,11 @@ class AppRouter {
             ),
             GoRoute(
               path: '/admin',
-              builder: (context, state) => const AdminDashboardScreen(),
+              builder: (context, state) {
+                final tab =
+                    int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0;
+                return AdminDashboardScreen(initialTab: tab);
+              },
             ),
             GoRoute(
               path: '/auction/:id',

@@ -6,22 +6,30 @@ import '../../models/auction_model.dart';
 import '../../services/auction_service.dart';
 import '../../services/credits_service.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/dembee_app_bar.dart';
 import '../../widgets/dembee_logo.dart';
 import '../../widgets/loading_widget.dart';
+import 'admin_add_auction_tab.dart';
 
-/// Figma Admin Panel — Ерөнхий tab
+/// Figma Admin Panel
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({super.key});
+  const AdminDashboardScreen({super.key, this.initialTab = 0});
+
+  final int initialTab;
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  int _tab = 0;
+  late int _tab;
   final _auctionService = AuctionService();
   final _creditsService = CreditsService();
+
+  @override
+  void initState() {
+    super.initState();
+    _tab = widget.initialTab.clamp(0, 3);
+  }
 
   static const _tabLabels = ['Ерөнхий', 'Дуудлага', 'Хэрэглэгч', 'Гүйлгээ'];
   static const _tabIcons = [
@@ -138,16 +146,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ),
           ),
-          body: _tab == 0
-              ? _OverviewTab(auctionService: _auctionService)
-              : Center(
-                  child: Text(
-                    '${_tabLabels[_tab]} — удахгүй',
-                    style: AppTheme.bodyStyle.copyWith(
-                      color: AppTheme.mutedForeground,
-                    ),
+          body: switch (_tab) {
+            0 => _OverviewTab(auctionService: _auctionService),
+            1 => AdminAddAuctionTab(auctionService: _auctionService),
+            _ => Center(
+                child: Text(
+                  '${_tabLabels[_tab]} — удахгүй',
+                  style: AppTheme.bodyStyle.copyWith(
+                    color: AppTheme.mutedForeground,
                   ),
                 ),
+              ),
+          },
         );
       },
     );

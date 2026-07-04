@@ -13,6 +13,9 @@ class AuctionModel {
     required this.status,
     this.image,
     this.retailValue,
+    this.description,
+    this.category,
+    this.bidIncrement = 1,
     this.lastBidder,
     this.lastBidUid,
     this.lastBidAmount = 0,
@@ -33,6 +36,9 @@ class AuctionModel {
   final String status;
   final String? image;
   final int? retailValue;
+  final String? description;
+  final String? category;
+  final int bidIncrement;
   final String? lastBidder;
   final String? lastBidUid;
   final int lastBidAmount;
@@ -80,6 +86,10 @@ class AuctionModel {
       status: data[FirestoreFields.status] as String? ?? AppConstants.statusPending,
       image: data[FirestoreFields.image] as String?,
       retailValue: (data[FirestoreFields.retailValue] as num?)?.toInt(),
+      description: data[FirestoreFields.description] as String?,
+      category: data[FirestoreFields.category] as String?,
+      bidIncrement:
+          (data[FirestoreFields.bidIncrement] as num?)?.toInt() ?? 1,
       lastBidder: data[FirestoreFields.lastBidder] as String?,
       lastBidUid: data[FirestoreFields.lastBidUid] as String?,
       lastBidAmount: (data[FirestoreFields.lastBidAmount] as num?)?.toInt() ?? 0,
