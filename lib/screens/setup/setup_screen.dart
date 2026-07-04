@@ -28,9 +28,10 @@ class SetupScreen extends StatelessWidget {
               '1. Firebase Console дээр төсөл үүсгэнэ\n'
               '2. Authentication (Email) идэвхжүүлнэ\n'
               '3. Cloud Firestore үүсгэнэ\n'
-              '4. Терминалд: dart pub global activate flutterfire_cli\n'
-              '5. Терминалд: flutterfire configure\n'
-              '6. Аппыг дахин ажиллуулна: flutter run\n\n'
+              '4. Firestore Rules: firebase/firestore.rules агуулгыг Console → Firestore → Rules дээр тавина\n'
+              '5. Терминалд: dart pub global activate flutterfire_cli\n'
+              '6. Терминалд: flutterfire configure\n'
+              '7. Аппыг дахин ажиллуулна: flutter run\n\n'
               'Дэлгэрэнгүй: SETUP.md файлыг уншина уу.',
             ),
             const Spacer(),

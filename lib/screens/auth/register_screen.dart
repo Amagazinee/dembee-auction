@@ -54,6 +54,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted) context.go('/home');
     } on AppException catch (e) {
       setState(() => _errorMessage = e.message);
+    } catch (e) {
+      setState(() => _errorMessage = 'Алдаа гарлаа: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
