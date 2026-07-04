@@ -151,7 +151,7 @@ class AuctionCard extends StatelessWidget {
                                 ),
                               ),
                               CountdownTimerWidget(
-                                endsAt: auction.endsAt,
+                                endsAt: auction.effectivePhaseEndsAt,
                                 tick: tick,
                                 style: AppTheme.monoStyle.copyWith(
                                   fontSize: 10,

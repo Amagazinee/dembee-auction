@@ -73,6 +73,14 @@ class AuctionModel {
     return DateTime.now().add(phaseConfig.winCountdown);
   }
 
+  /// Одоогийн үеийн дуусах цаг (phaseStartedAt + үеийн хугацаа)
+  DateTime get effectivePhaseEndsAt {
+    if (phaseStartedAt != null) {
+      return phaseStartedAt!.add(phaseConfig.duration);
+    }
+    return endsAt;
+  }
+
   String get winCountdownResetLabel {
     final mins = phaseConfig.winCountdownSeconds ~/ 60;
     final secs = phaseConfig.winCountdownSeconds % 60;

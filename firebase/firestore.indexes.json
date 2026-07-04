@@ -31,6 +31,14 @@
         { "fieldPath": "winnerUid", "order": "ASCENDING" },
         { "fieldPath": "endsAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "auctions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "winCountdownEndsAt", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
