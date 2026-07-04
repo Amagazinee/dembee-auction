@@ -49,7 +49,9 @@ class PurchaseModel {
 
   String get paymentLabel => switch (paymentMethod) {
         'qpay' => 'QPay',
-        'golomt' => 'Голомт',
+        'golomt' => 'Golomt Bank',
+        'khan' => 'Khan Bank',
+        'tdb' => 'TDB',
         'test' => 'Туршилт',
         _ => paymentMethod,
       };
