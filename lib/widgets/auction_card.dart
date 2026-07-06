@@ -238,7 +238,10 @@ class AuctionCard extends StatelessWidget {
                                   color: AppTheme.primaryForeground,
                                 ),
                               )
-                            : const Icon(Icons.arrow_forward, size: 16),
+                            : Icon(
+                                expanded ? Icons.gavel : Icons.arrow_forward,
+                                size: 16,
+                              ),
                         label: Text(
                           bidBalance == 0
                               ? 'Санал дууссан'
