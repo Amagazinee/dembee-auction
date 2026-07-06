@@ -17,7 +17,31 @@ class AdminUsersTab extends StatefulWidget {
 }
 
 class _AdminUsersTabState extends State<AdminUsersTab> {
-  String _query = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<UserModel> _filterUsers(List<UserModel> allUsers) {
+    final q = _searchController.text.trim().toLowerCase();
+    if (q.isEmpty) return allUsers;
+
+    final qDigits = q.replaceAll(RegExp(r'\D'), '');
+    return allUsers.where((u) {
+      if (u.name.toLowerCase().contains(q)) return true;
+      if (u.email.toLowerCase().contains(q)) return true;
+      final phone = u.phone.toLowerCase();
+      if (phone.contains(q)) return true;
+      if (qDigits.isNotEmpty) {
+        final phoneDigits = u.phone.replaceAll(RegExp(r'\D'), '');
+        if (phoneDigits.contains(qDigits)) return true;
+      }
+      return false;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,14 +65,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         }
 
         final allUsers = snap.data ?? [];
-        final q = _query.trim().toLowerCase();
-        final users = q.isEmpty
-            ? allUsers
-            : allUsers.where((u) {
-                return u.name.toLowerCase().contains(q) ||
-                    u.email.toLowerCase().contains(q) ||
-                    u.phone.contains(q);
-              }).toList();
+        final users = _filterUsers(allUsers);
+        final q = _searchController.text.trim().toLowerCase();
 
         final adminCount = allUsers.where((u) => u.isAdmin).length;
         final totalBids =
@@ -90,11 +108,26 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: TextField(
-                onChanged: (v) => setState(() => _query = v),
-                style: AppTheme.bodyStyle,
+                controller: _searchController,
+                onChanged: (_) => setState(() {}),
+                keyboardType: TextInputType.text,
+                textInputAction: TextInputAction.search,
+                cursorColor: AppTheme.primary,
+                style: AppTheme.bodyStyle.copyWith(
+                  color: AppTheme.foreground,
+                  fontSize: 14,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Нэр, имэйл, утсаар хайх...',
-                  prefixIcon: const Icon(Icons.search, size: 20),
+                  hintStyle: AppTheme.bodyStyle.copyWith(
+                    color: AppTheme.mutedForeground,
+                    fontSize: 14,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    size: 20,
+                    color: AppTheme.mutedForeground,
+                  ),
                   filled: true,
                   fillColor: AppTheme.inputBackground,
                   contentPadding: const EdgeInsets.symmetric(
