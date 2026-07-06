@@ -147,26 +147,51 @@ firebase deploy --only firestore:rules,firestore:indexes,storage --project dembe
 ```
 Апп, санал өгөх, админ самбар, **зураг upload** ажиллана. Ялагч тодруулах: админ → Дуудлага tab → «Ялагч тодруулах» товч (Cloud Functions deploy хийхээс өмнө).
 
-#### Deploy (Blaze дээр)
+#### Blaze одоо идэвхжүүлэх (3 алхам)
+
+**Алхам 1 — Blaze сонгох** (2 минут, зөвхөн та хийж чадна)
+
+1. Нээх: https://console.firebase.google.com/project/dembee-auction/usage/details
+2. **Modify plan** / **Upgrade** → **Blaze** сонго
+3. Төлбөрийн карт холбоно
+4. (Зөвлөмж) Google Cloud Console → Billing → **Budget $10/сар** alert тавих
+
+**Алхам 2 — Firebase нэвтрэх** (компьютер дээрээ)
+
+```bash
+npx firebase-tools@14 login
+```
+
+**Алхам 3 — Deploy**
+
+```bash
+# Linux / macOS
+./scripts/deploy-blaze.sh
+
+# Windows (PowerShell)
+cd functions; npm install; npm run build; cd ..
+npx firebase-tools@14 deploy --only functions,firestore:rules,firestore:indexes --project dembee-auction
+```
+
+Deploy амжилттай болсны дараа Firebase Console → **Functions** таб дээр 3 функц харагдана.
+
+#### Deploy (Blaze дээр) — дэлгэрэнгүй
 
 ```powershell
 cd C:\Users\user\dembee_app\functions
 npm install
 cd ..
-firebase deploy --only functions --project dembee-auction
+firebase deploy --only functions,firestore:rules,firestore:indexes --project dembee-auction
 ```
 
 **Функцүүд** (`asia-southeast1` бүс):
 | Функц | Зориулалт |
 |-------|-----------|
-| `processAuctionTask` | Task queue — яг цагт дуудлага шалгана |
-| `scheduleAuctionLifecycle` | Санал/үе өөрчлөгдөхөд дараагийн шалгалт төлөвлөнө |
-| `sweepAuctionLifecycle` | Минут бүр нөөц sweep (task алдагдсан тохиолдолд) |
+| `processAuctionTask` | Task queue — төлөвлөсөн эхлэх + lifecycle шалгалт |
+| `scheduleAuctionLifecycle` | Дуудлага өөрчлөгдөхөд дараагийн шалгалт төлөвлөнө |
+| `sweepAuctionLifecycle` | Минут бүр: pending идэвхжүүлэх + lifecycle sweep |
 
-Deploy дараа шинэ index (`status` + `winCountdownEndsAt`) publish хийнэ:
-```powershell
-firebase deploy --only firestore:indexes --project dembee-auction
-```
+Deploy дараа шинэ index (`status` + `startsAt`, `status` + `winCountdownEndsAt`) publish хийнэ.
 
 ### 4.3 Firebase Storage (дуудлагын зураг)
 
