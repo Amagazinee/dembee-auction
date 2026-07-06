@@ -63,11 +63,11 @@ class _AuctionLiveViewState extends State<AuctionLiveView> {
   bool get _isFinished =>
       widget.auction.isClosed || widget.auction.hasEnded;
 
-  bool get _isPending => widget.auction.isPending;
+  bool get _isScheduled => widget.auction.isScheduled(widget.now);
 
   @override
   Widget build(BuildContext context) {
-    if (_isPending) {
+    if (_isScheduled) {
       return _PendingView(
         auction: widget.auction,
         now: widget.now,
@@ -84,8 +84,10 @@ class _AuctionLiveViewState extends State<AuctionLiveView> {
     }
 
     final auction = widget.auction;
-    final winRemaining =
-        auction.effectiveWinCountdownEndsAt.difference(widget.now);
+    final winEndsAt = auction.effectiveWinCountdownEndsAtAt(widget.now);
+    final winRemaining = winEndsAt != null
+        ? winEndsAt.difference(widget.now)
+        : Duration.zero;
     final phaseRemaining =
         auction.effectivePhaseEndsAt.difference(widget.now);
     final phaseConfig = auction.phaseConfig;
@@ -462,7 +464,7 @@ class _PendingView extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'ДУУДЛАГА ЭХЛЭХЭД',
+                    'ХҮЛЭЭГДЭХ ЦАГ',
                     style: AppTheme.headingStyle.copyWith(fontSize: 18),
                   ),
                   const SizedBox(height: 12),

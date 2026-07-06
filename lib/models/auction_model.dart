@@ -67,8 +67,9 @@ class AuctionModel {
   bool isBiddable(DateTime now) =>
       isActive && !isBeforeStart(now) && !hasEnded;
 
-  /// Админ — одоо явагдаж буй дуудлага
-  bool get isOngoing => isActive && !hasEnded;
+  /// Админ — одоо явагдаж буй дуудлага (эхлэх цаг хүрсэн)
+  bool get isOngoing =>
+      isActive && !isBeforeStart(DateTime.now()) && !hasEnded;
 
   /// Төлөвлөгдсөн (эхлээгүй) дуудлага
   bool isScheduled(DateTime now) => isPending || (isActive && isBeforeStart(now));
@@ -82,10 +83,14 @@ class AuctionModel {
 
   AuctionPhaseConfig get phaseConfig => AuctionPhases.forPhase(currentPhase);
 
-  /// Firestore-д байхгүй бол үеийн тохиргооноос тооцно
-  DateTime get effectiveWinCountdownEndsAt {
+  /// Soft round тооллогын дуусах цаг (эхлээгүй дуудлагад null)
+  DateTime? effectiveWinCountdownEndsAtAt(DateTime now) {
+    if (isScheduled(now)) return null;
     if (winCountdownEndsAt != null) return winCountdownEndsAt!;
-    return DateTime.now().add(phaseConfig.winCountdown);
+    if (phaseStartedAt != null) {
+      return phaseStartedAt!.add(phaseConfig.winCountdown);
+    }
+    return null;
   }
 
   /// Одоогийн үеийн дуусах цаг (phaseStartedAt + үеийн хугацаа)

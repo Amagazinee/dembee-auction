@@ -38,7 +38,8 @@ class AuctionCard extends StatelessWidget {
   final bool expanded;
 
   bool get _isFinished => auction.isClosed || auction.hasEnded;
-  bool get _isScheduled => auction.isPending;
+
+  bool _isScheduled(DateTime now) => auction.isScheduled(now);
 
   bool _canQuickBid(DateTime now) =>
       auction.isBiddable(now) && bidBalance > 0 && !isBidding;
@@ -55,7 +56,7 @@ class AuctionCard extends StatelessWidget {
 
     final now = tick ?? DateTime.now();
 
-    if (_isScheduled) {
+    if (_isScheduled(now)) {
       return _ScheduledCard(
         auction: auction,
         tick: now,
@@ -145,7 +146,8 @@ class AuctionCard extends StatelessWidget {
                       compact: !expanded,
                       tick: tick,
                       gradient: true,
-                      winCountdownEndsAt: auction.effectiveWinCountdownEndsAt,
+                      winCountdownEndsAt:
+                          auction.effectiveWinCountdownEndsAtAt(now)!,
                       resetLabel: auction.winCountdownResetLabel,
                     ),
                     if (expanded) ...[
@@ -403,7 +405,7 @@ class _ScheduledCard extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            'ЭХЛЭХ ЦАГ',
+                            'ХҮЛЭЭГДЭХ ЦАГ',
                             style: AppTheme.bodyStyle.copyWith(
                               fontSize: 9,
                               letterSpacing: 1,
