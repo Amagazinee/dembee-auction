@@ -136,56 +136,72 @@ class AuctionCard extends StatelessWidget {
                       winCountdownEndsAt: auction.effectiveWinCountdownEndsAt,
                       resetLabel: auction.winCountdownResetLabel,
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Үе үргэлжлэх:',
-                                style: AppTheme.bodyStyle.copyWith(
-                                  fontSize: 9,
-                                  color: AppTheme.mutedForeground,
+                    if (expanded) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Үе үргэлжлэх:',
+                                  style: AppTheme.bodyStyle.copyWith(
+                                    fontSize: 9,
+                                    color: AppTheme.mutedForeground,
+                                  ),
                                 ),
-                              ),
-                              CountdownTimerWidget(
-                                endsAt: auction.effectivePhaseEndsAt,
-                                tick: tick,
-                                style: AppTheme.monoStyle.copyWith(
-                                  fontSize: 10,
-                                  color: AppTheme.foreground,
+                                CountdownTimerWidget(
+                                  endsAt: auction.effectivePhaseEndsAt,
+                                  tick: tick,
+                                  style: AppTheme.monoStyle.copyWith(
+                                    fontSize: 10,
+                                    color: AppTheme.foreground,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Сүүлийн санал:',
-                                style: AppTheme.bodyStyle.copyWith(
-                                  fontSize: 9,
-                                  color: AppTheme.mutedForeground,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Сүүлийн санал:',
+                                  style: AppTheme.bodyStyle.copyWith(
+                                    fontSize: 9,
+                                    color: AppTheme.mutedForeground,
+                                  ),
                                 ),
-                              ),
-                              Text(
-                                auction.lastBidder != null
-                                    ? maskName(auction.lastBidder!)
-                                    : '—',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTheme.bodyStyle.copyWith(fontSize: 10),
-                              ),
-                            ],
+                                Text(
+                                  auction.lastBidder != null
+                                      ? maskName(auction.lastBidder!)
+                                      : '—',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style:
+                                      AppTheme.bodyStyle.copyWith(fontSize: 10),
+                                ),
+                              ],
+                            ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                    ] else ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        auction.lastBidder != null
+                            ? 'Сүүлийн: ${maskName(auction.lastBidder!)}'
+                            : 'Санал байхгүй',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTheme.bodyStyle.copyWith(
+                          fontSize: 9,
+                          color: AppTheme.mutedForeground,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
+                      ),
+                    ],
                     Row(
                       children: [
                         Text(
@@ -210,7 +226,9 @@ class AuctionCard extends StatelessWidget {
                       width: double.infinity,
                       height: expanded ? 44 : 36,
                       child: ElevatedButton.icon(
-                        onPressed: _canQuickBid ? onQuickBid : null,
+                        onPressed: expanded
+                            ? (_canQuickBid ? onQuickBid : null)
+                            : (onOpen ?? () => context.go('/auction/${auction.id}')),
                         icon: isBidding
                             ? const SizedBox(
                                 width: 16,
@@ -220,11 +238,13 @@ class AuctionCard extends StatelessWidget {
                                   color: AppTheme.primaryForeground,
                                 ),
                               )
-                            : const Icon(Icons.gavel, size: 16),
+                            : const Icon(Icons.arrow_forward, size: 16),
                         label: Text(
                           bidBalance == 0
                               ? 'Санал дууссан'
-                              : 'Санал илгээх -1',
+                              : expanded
+                                  ? 'Санал илгээх -1'
+                                  : 'Нээх →',
                           style: AppTheme.bodyStyle.copyWith(
                             fontSize: expanded ? 13 : 11,
                             fontWeight: FontWeight.w700,
@@ -237,7 +257,7 @@ class AuctionCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (recentBids.isNotEmpty) ...[
+                    if (expanded && recentBids.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       BidHistoryTable(
                         bids: recentBids,
