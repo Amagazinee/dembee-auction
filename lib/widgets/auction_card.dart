@@ -38,8 +38,10 @@ class AuctionCard extends StatelessWidget {
   final bool expanded;
 
   bool get _isFinished => auction.isClosed || auction.hasEnded;
-  bool get _canQuickBid =>
-      auction.isActive && !auction.hasEnded && bidBalance > 0 && !isBidding;
+  bool get _isScheduled => auction.isPending;
+
+  bool _canQuickBid(DateTime now) =>
+      auction.isBiddable(now) && bidBalance > 0 && !isBidding;
 
   int get _savings {
     final retail = auction.retailValue;
@@ -50,6 +52,16 @@ class AuctionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (_isFinished) return _FinishedCard(auction: auction, onOpen: onOpen);
+
+    final now = tick ?? DateTime.now();
+
+    if (_isScheduled) {
+      return _ScheduledCard(
+        auction: auction,
+        tick: now,
+        onOpen: onOpen,
+      );
+    }
 
     return Material(
       color: AppTheme.card,
@@ -233,7 +245,7 @@ class AuctionCard extends StatelessWidget {
                       height: expanded ? 44 : 36,
                       child: ElevatedButton.icon(
                         onPressed: expanded
-                            ? (_canQuickBid ? onQuickBid : null)
+                            ? (_canQuickBid(now) ? onQuickBid : null)
                             : (onOpen ?? () => context.go('/auction/${auction.id}')),
                         icon: isBidding
                             ? const SizedBox(
@@ -327,6 +339,110 @@ class _ActiveImage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ScheduledCard extends StatelessWidget {
+  const _ScheduledCard({
+    required this.auction,
+    required this.tick,
+    this.onOpen,
+  });
+
+  final AuctionModel auction;
+  final DateTime tick;
+  final VoidCallback? onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final startsAt = auction.startsAt ?? tick;
+    final remaining = startsAt.difference(tick);
+
+    return Material(
+      color: AppTheme.card,
+      clipBehavior: Clip.antiAlias,
+      borderRadius: BorderRadius.circular(AppTheme.radius),
+      child: InkWell(
+        onTap: onOpen ?? () => context.go('/auction/${auction.id}'),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFF60A5FA).withValues(alpha: 0.5)),
+            borderRadius: BorderRadius.circular(AppTheme.radius),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _ActiveImage(auction: auction),
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      auction.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.headingStyle.copyWith(fontSize: 13),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A2A3A),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: const Color(0xFF60A5FA).withValues(alpha: 0.4),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'ЭХЛЭХ ЦАГ',
+                            style: AppTheme.bodyStyle.copyWith(
+                              fontSize: 9,
+                              letterSpacing: 1,
+                              color: const Color(0xFF60A5FA),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            formatScheduledStart(startsAt),
+                            textAlign: TextAlign.center,
+                            style: AppTheme.bodyStyle.copyWith(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            remaining.isNegative
+                                ? 'Тун удахгүй эхлэнэ...'
+                                : formatPhaseCountdown(remaining),
+                            style: AppTheme.monoStyle.copyWith(
+                              fontSize: 14,
+                              color: const Color(0xFF93C5FD),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: onOpen,
+                      child: const Text('Дэлгэрэнгүй харах'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

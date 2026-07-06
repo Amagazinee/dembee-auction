@@ -9,12 +9,18 @@ import '../core/constants/firestore_fields.dart';
 import '../core/errors/app_exception.dart';
 import '../models/auction_model.dart';
 import '../models/bid_history_model.dart';
+import 'notification_service.dart';
 
 class AuctionService {
-  AuctionService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  AuctionService({
+    FirebaseFirestore? firestore,
+    NotificationService? notificationService,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _notificationService =
+            notificationService ?? NotificationService();
 
   final FirebaseFirestore _firestore;
+  final NotificationService _notificationService;
 
   CollectionReference<Map<String, dynamic>> get _auctions =>
       _firestore.collection(AppConstants.auctionsCollection);
@@ -96,12 +102,13 @@ class AuctionService {
   /// Админ — шинэ doc ID (зураг upload-ийн өмнө)
   String createAuctionId() => _auctions.doc().id;
 
-  /// Админ — шинэ дуудлага үүсгэх (1-р үеэс эхэлнэ)
+  /// Админ — шинэ дуудлага үүсгэх (эхлэх цагтай)
   Future<String> createAuction({
     required String title,
     required String category,
     required String description,
     required int bidIncrement,
+    required DateTime startsAt,
     int? retailValue,
     String? imageUrl,
     String? docId,
@@ -112,23 +119,32 @@ class AuctionService {
 
     final ref = docId != null ? _auctions.doc(docId) : _auctions.doc();
     final now = DateTime.now();
+    final scheduled = startsAt.isAfter(now.add(const Duration(minutes: 1)));
     final phaseConfig = AuctionPhases.forPhase(1);
-    final endsAt = now.add(const Duration(days: 30));
-    final winReset = now.add(phaseConfig.winCountdown);
 
     final data = <String, dynamic>{
       FirestoreFields.title: title.trim(),
       FirestoreFields.price: 0,
-      FirestoreFields.endsAt: Timestamp.fromDate(endsAt),
-      FirestoreFields.status: AppConstants.statusActive,
+      FirestoreFields.startsAt: Timestamp.fromDate(startsAt),
+      FirestoreFields.status:
+          scheduled ? AppConstants.statusPending : AppConstants.statusActive,
       FirestoreFields.phase: 1,
-      FirestoreFields.phaseStartedAt: FieldValue.serverTimestamp(),
       FirestoreFields.totalBids: 0,
       FirestoreFields.bidIncrement: bidIncrement,
       FirestoreFields.category: category,
-      FirestoreFields.winCountdownEndsAt: Timestamp.fromDate(winReset),
       FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
     };
+
+    if (scheduled) {
+      data[FirestoreFields.endsAt] =
+          Timestamp.fromDate(startsAt.add(const Duration(days: 30)));
+    } else {
+      final endsAt = now.add(const Duration(days: 30));
+      final winReset = now.add(phaseConfig.winCountdown);
+      data[FirestoreFields.endsAt] = Timestamp.fromDate(endsAt);
+      data[FirestoreFields.phaseStartedAt] = FieldValue.serverTimestamp();
+      data[FirestoreFields.winCountdownEndsAt] = Timestamp.fromDate(winReset);
+    }
 
     if (description.trim().isNotEmpty) {
       data[FirestoreFields.description] = description.trim();
@@ -142,9 +158,52 @@ class AuctionService {
 
     try {
       await ref.set(data);
+      await _notificationService.notifyAllUsersNewAuction(
+        auctionId: ref.id,
+        title: title.trim(),
+        startsAt: startsAt,
+      );
       return ref.id;
     } on FirebaseException catch (e) {
       throw FirestoreException('Дуудлага нэмэхэд алдаа: ${e.message}');
+    }
+  }
+
+  /// Төлөвлөсөн дуудлагыг эхлүүлэх
+  Future<bool> activateScheduledAuctionIfDue(String auctionId) async {
+    final ref = _auctions.doc(auctionId);
+
+    try {
+      return await _firestore.runTransaction((transaction) async {
+        final snap = await transaction.get(ref);
+        if (!snap.exists) return false;
+
+        final data = snap.data()!;
+        final status = data[FirestoreFields.status] as String? ?? '';
+        if (status != AppConstants.statusPending) return false;
+
+        final startsAt =
+            (data[FirestoreFields.startsAt] as Timestamp?)?.toDate();
+        if (startsAt == null || DateTime.now().isBefore(startsAt)) {
+          return false;
+        }
+
+        final now = DateTime.now();
+        final phaseConfig = AuctionPhases.forPhase(1);
+        transaction.update(ref, {
+          FirestoreFields.status: AppConstants.statusActive,
+          FirestoreFields.phaseStartedAt: Timestamp.fromDate(now),
+          FirestoreFields.winCountdownEndsAt: Timestamp.fromDate(
+            now.add(phaseConfig.winCountdown),
+          ),
+          FirestoreFields.endsAt:
+              Timestamp.fromDate(now.add(const Duration(days: 30))),
+          FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
+        });
+        return true;
+      });
+    } on FirebaseException {
+      return false;
     }
   }
 
@@ -190,6 +249,15 @@ class AuctionService {
         if (status != AppConstants.statusActive) {
           throw const FirestoreException('Дуудлага идэвхгүй байна');
         }
+
+        final startsAt =
+            (data[FirestoreFields.startsAt] as Timestamp?)?.toDate();
+        if (startsAt != null && DateTime.now().isBefore(startsAt)) {
+          throw const FirestoreException(
+            'Дуудлага одоогоор эхээгүй байна. Төлөвлөсөн цагаар эхлэнэ.',
+          );
+        }
+
         if (endsAt != null && DateTime.now().isAfter(endsAt)) {
           throw const FirestoreException('Дуудлага дууссан байна');
         }

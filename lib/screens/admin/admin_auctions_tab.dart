@@ -36,6 +36,7 @@ class AdminAuctionsTab extends StatelessWidget {
         }
 
         final auctions = snap.data ?? [];
+        final scheduled = auctions.where((a) => a.isPending).toList();
         final ongoing = auctions.where((a) => a.isOngoing).toList();
         final finished = auctions.where((a) => a.isFinished).toList();
 
@@ -45,6 +46,23 @@ class AdminAuctionsTab extends StatelessWidget {
             _AddAuctionButton(
               onTap: () => context.push('/admin/add-auction'),
             ),
+            if (scheduled.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              _SectionHeader(
+                title: 'Төлөвлөсөн дуудлага',
+                count: scheduled.length,
+                color: const Color(0xFF60A5FA),
+              ),
+              const SizedBox(height: 8),
+              ...scheduled.map((a) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _AdminAuctionCard(
+                      auction: a,
+                      auctionService: auctionService,
+                      onTap: () => context.push('/auction/${a.id}'),
+                    ),
+                  )),
+            ],
             const SizedBox(height: 20),
             _SectionHeader(
               title: 'Идэвхтэй дуудлага',
@@ -288,10 +306,13 @@ class _AdminAuctionCardState extends State<_AdminAuctionCard> {
   @override
   Widget build(BuildContext context) {
     final auction = widget.auction;
+    final scheduled = auction.isPending;
     final ongoing = auction.isOngoing;
-    final statusLabel = ongoing ? 'Идэвхтэй' : 'Дууссан';
-    final statusColor =
-        ongoing ? const Color(0xFF22C55E) : AppTheme.mutedForeground;
+    final statusLabel =
+        scheduled ? 'Төлөвлөсөн' : (ongoing ? 'Идэвхтэй' : 'Дууссан');
+    final statusColor = scheduled
+        ? const Color(0xFF60A5FA)
+        : (ongoing ? const Color(0xFF22C55E) : AppTheme.mutedForeground);
 
     return Material(
       color: AppTheme.card,
@@ -355,6 +376,16 @@ class _AdminAuctionCardState extends State<_AdminAuctionCard> {
                         ),
                       ],
                     ),
+                    if (scheduled && auction.startsAt != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Эхлэх: ${formatScheduledStart(auction.startsAt!)}',
+                        style: AppTheme.bodyStyle.copyWith(
+                          fontSize: 11,
+                          color: const Color(0xFF60A5FA),
+                        ),
+                      ),
+                    ],
                     if (auction.category != null &&
                         auction.category!.isNotEmpty) ...[
                       const SizedBox(height: 4),

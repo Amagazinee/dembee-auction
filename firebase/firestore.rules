@@ -48,6 +48,19 @@ service cloud.firestore {
         );
     }
 
+    function isScheduledActivation() {
+      return resource.data.status == 'pending'
+        && request.resource.data.status == 'active'
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly([
+              'status',
+              'phaseStartedAt',
+              'winCountdownEndsAt',
+              'endsAt',
+              'updatedAt'
+            ]);
+    }
+
     function isLifecyclePhaseAdvance() {
       return resource.data.status == 'active'
         && request.resource.data.status == 'active'
@@ -117,6 +130,8 @@ service cloud.firestore {
         ||
         isLifecycleWinnerUpdate()
         ||
+        isScheduledActivation()
+        ||
         isLifecyclePhaseAdvance()
         ||
         (
@@ -166,6 +181,18 @@ service cloud.firestore {
         && request.resource.data.paymentMethod == 'test'
         && request.resource.data.status == 'completed';
       allow update, delete: if false;
+    }
+
+    // --- notifications ---
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn()
+        && resource.data.userUid == request.auth.uid;
+      allow create: if isAdmin();
+      allow update: if isSignedIn()
+        && resource.data.userUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isSignedIn()
+        && resource.data.userUid == request.auth.uid;
     }
   }
 }

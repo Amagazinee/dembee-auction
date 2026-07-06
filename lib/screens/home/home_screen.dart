@@ -129,7 +129,15 @@ class _HomeScreenState extends State<HomeScreen> {
               }
 
               final auctions = auctionSnap.data ?? [];
-              final active = auctions.where((a) => a.isActive && !a.hasEnded);
+              final active = auctions
+                  .where((a) => a.isActive && !a.hasEnded)
+                  .toList();
+              final scheduled =
+                  auctions.where((a) => a.isPending).toList();
+              final displayAuctions = [
+                ...scheduled,
+                ...auctions.where((a) => !a.isPending),
+              ];
               final totalBids =
                   auctions.fold<int>(0, (s, a) => s + a.totalBids);
               final maxPhase = active.isEmpty
@@ -176,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   const SliverToBoxAdapter(
                                     child: PhaseLegend(),
                                   ),
-                                  if (auctions.isEmpty)
+                                  if (displayAuctions.isEmpty)
                                     const SliverFillRemaining(
                                       child: Center(
                                         child: Text(
@@ -198,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       sliver: SliverList(
                                         delegate: SliverChildBuilderDelegate(
                                           (context, index) {
-                                            final auction = auctions[index];
+                                            final auction = displayAuctions[index];
                                             return Padding(
                                               padding: const EdgeInsets.only(
                                                 bottom: 12,
@@ -214,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               ),
                                             );
                                           },
-                                          childCount: auctions.length,
+                                          childCount: displayAuctions.length,
                                         ),
                                       ),
                                     )
@@ -237,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         delegate:
                                             SliverChildBuilderDelegate(
                                           (context, index) {
-                                            final auction = auctions[index];
+                                            final auction = displayAuctions[index];
                                             return _buildAuctionCard(
                                               auction: auction,
                                               bidBalance: bidBalance,
@@ -248,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                               expanded: false,
                                             );
                                           },
-                                          childCount: auctions.length,
+                                          childCount: displayAuctions.length,
                                         ),
                                       ),
                                     ),
