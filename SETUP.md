@@ -270,6 +270,48 @@ powershell -ExecutionPolicy Bypass -File scripts\windows-emulator-fix.ps1
 
 ---
 
+## 7.1 «Тохиргоо шаардлагатай» — апп ажиллахгүй
+
+Энэ дэлгэц гарвал **`lib/firebase_options.dart` дээр `YOUR_API_KEY` placeholder** байна гэсэн үг.
+Firestore Console дээр өгөгдөл байсан ч **локал апп** Firebase-тэй холбогдоогүй.
+
+### Хурдан засвар (PowerShell)
+
+```powershell
+cd C:\Users\user\dembee-auction
+powershell -ExecutionPolicy Bypass -File scripts\setup-firebase.ps1
+flutter pub get
+flutter run --no-enable-impeller
+```
+
+### Гараар шалгах
+
+| Файл | Байх ёстой |
+|------|------------|
+| `lib\firebase_options.dart` | `YOUR_API_KEY` **байхгүй** |
+| `android\app\google-services.json` | Файл байна |
+
+`firebase_options.dart` нээж харна — `projectId: 'dembee-auction'` гэх мэт **бодит** утга байх ёстой.
+
+### Гараар (flutterfire ажиллахгүй бол)
+
+1. https://console.firebase.google.com/project/dembee-auction/settings/general
+2. **Android app** → package name: `com.example.dembee_app`
+3. `google-services.json` татаж `android\app\` дотор тавина
+4. Дахин: `flutterfire configure --project=dembee-auction`
+5. Апп бүрэн дахин ажиллуулна: `q` → `flutter run --no-enable-impeller`
+
+### Түгээмэл алдаа
+
+| Алдаа | Шийдэл |
+|-------|--------|
+| `flutterfire` олдсонгүй | `$env:Path += ";$env:LOCALAPPDATA\Pub\Cache\bin"` |
+| Web сонгосон | Дахин configure → **Android** сонго |
+| Өөр хавтас | `cd C:\Users\user\dembee-auction` шалгана |
+| Hot reload | `q` дарж бүрэн дахин `flutter run` |
+
+---
+
 ## 8. АЮУЛГҮЙ БАЙДЛЫН ДҮРЭМ
 
 ### ✅ Хийж болно
