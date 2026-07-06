@@ -93,7 +93,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                       Expanded(
                         child: Text(
                           'Санал багц худалдан авч дуудлага худалдаанд оролцоно. '
-                          'Санал бүр үнийг нэмж, ялагч тодрох хугацааг дахин эхлүүлнэ.',
+                          'Санал бүр үнийг нэмж, ялагч тодорхойлох хугацааг дахин эхлүүлнэ.',
                           style: AppTheme.bodyStyle.copyWith(
                             fontSize: 13,
                             color: AppTheme.secondaryForeground,

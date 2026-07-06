@@ -241,7 +241,7 @@ class _AdminAuctionCardState extends State<_AdminAuctionCard> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.card,
-        title: const Text('Ялагч тодруулах'),
+        title: const Text('Ялагч тодорхойлох'),
         content: Text(
           '«${widget.auction.title}» дуудлагын сүүлийн санал өгсөн '
           '${widget.auction.lastBidder ?? 'хэрэглэгчийг'} ялагч болгох уу?',
@@ -253,7 +253,7 @@ class _AdminAuctionCardState extends State<_AdminAuctionCard> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Тодруулах'),
+            child: const Text('Тодорхойлох'),
           ),
         ],
       ),
@@ -267,7 +267,7 @@ class _AdminAuctionCardState extends State<_AdminAuctionCard> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Ялагч амжилттай тодорлоо'),
+          content: Text('Ялагч амжилттай тодорхойлогдлоо'),
           backgroundColor: AppTheme.secondary,
         ),
       );
@@ -463,7 +463,7 @@ class _AdminAuctionCardState extends State<_AdminAuctionCard> {
                             )
                           : const Icon(Icons.emoji_events_outlined, size: 18),
                       label: Text(
-                        _declaring ? 'Тодруулж байна...' : 'Ялагч тодруулах',
+                        _declaring ? 'Тодорхойлож байна...' : 'Ялагч тодорхойлох',
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppTheme.primary,

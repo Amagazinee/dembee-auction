@@ -1,4 +1,4 @@
-/// Ялагч тодрох тооллого — MM.SS.mmm
+/// Ялагч тодорхойлох тооллого — MM.SS.mmm
 String formatWinCountdownMs(Duration duration) {
   if (duration.isNegative) return '00.000';
   final totalMs = duration.inMilliseconds;

@@ -231,7 +231,7 @@ class AuctionService {
     }
   }
 
-  /// Админ — ялагч гараар тодруулах (Cloud Functions deploy хийгээгүй үед)
+  /// Админ — ялагч гараар тодорхойлох (Cloud Functions deploy хийгээгүй үед)
   Future<void> declareWinnerAdmin(String auctionId) async {
     final ref = _auctions.doc(auctionId);
 
@@ -251,7 +251,7 @@ class AuctionService {
         final lastBidUid = data[FirestoreFields.lastBidUid] as String?;
         if (lastBidUid == null || lastBidUid.isEmpty) {
           throw const FirestoreException(
-            'Санал байхгүй тул ялагч тодруулах боломжгүй',
+            'Санал байхгүй тул ялагч тодорхойлох боломжгүй',
           );
         }
 
@@ -267,7 +267,7 @@ class AuctionService {
         });
       });
     } on FirebaseException catch (e) {
-      throw FirestoreException('Ялагч тодруулахад алдаа: ${e.message}');
+      throw FirestoreException('Ялагч тодорхойлоход алдаа: ${e.message}');
     }
   }
 

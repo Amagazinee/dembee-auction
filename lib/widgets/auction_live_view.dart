@@ -346,7 +346,7 @@ class _RoundCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            winExpired ? 'Ялагч тодорлоо' : 'Ялагч тодроход',
+            winExpired ? 'Ялагч тодорхойлогдлоо' : 'Ялагч тодорхойлоход',
             textAlign: TextAlign.center,
             style: AppTheme.bodyStyle.copyWith(
               fontSize: 12,
@@ -439,7 +439,7 @@ class _FinishedView extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'ЯЛАГЧ ТОДОРЛОО',
+                    'ЯЛАГЧ ТОДОРХОЙЛОГДЛОО',
                     style: AppTheme.headingStyle.copyWith(fontSize: 20),
                   ),
                   if (auction.winnerName != null) ...[

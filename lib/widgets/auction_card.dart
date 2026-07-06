@@ -384,7 +384,7 @@ class _FinishedCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'ЯЛАГЧ ТОДОРЛОО',
+                            'ЯЛАГЧ ТОДОРХОЙЛОГДЛОО',
                             style: AppTheme.bodyStyle.copyWith(
                               fontSize: 10,
                               letterSpacing: 1,

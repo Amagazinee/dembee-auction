@@ -26,7 +26,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Үнэлгээ сонгоно уу'),
+          content: Text('Үнэлгээг сонгоно уу'),
           behavior: SnackBarBehavior.floating,
         ),
       );

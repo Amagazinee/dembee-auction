@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../core/utils/formatters.dart';
 import '../theme/app_theme.dart';
 
-/// Figma DualTimer — ялагч тодрох тооллого
+/// Figma DualTimer — ялагч тодорхойлох тооллого
 class DualTimer extends StatefulWidget {
   const DualTimer({
     super.key,
@@ -105,7 +105,7 @@ class _DualTimerState extends State<DualTimer> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            isExpired ? 'ЯЛАГЧ ТОДОРЛОО' : 'ЯЛАГЧ ТОДОРЛОХ',
+            isExpired ? 'ЯЛАГЧ ТОДОРХОЙЛОГДЛОО' : 'ЯЛАГЧ ТОДОРХОЙЛОХ',
             style: AppTheme.bodyStyle.copyWith(
               fontSize: compact ? 8 : 10,
               letterSpacing: 1.2,
