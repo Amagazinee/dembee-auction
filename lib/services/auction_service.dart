@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../core/auction_lifecycle.dart';
 import '../core/constants/app_constants.dart';
@@ -103,7 +104,8 @@ class AuctionService {
   String createAuctionId() => _auctions.doc().id;
 
   /// Админ — шинэ дуудлага үүсгэх (эхлэх цагтай)
-  Future<String> createAuction({
+  /// [notificationsSent] false бол дуудлага үүссэн ч мэдэгдэл илгээгдээгүй
+  Future<({String auctionId, bool notificationsSent})> createAuction({
     required String title,
     required String category,
     required String description,
@@ -158,15 +160,23 @@ class AuctionService {
 
     try {
       await ref.set(data);
+    } on FirebaseException catch (e) {
+      throw FirestoreException('Дуудлага нэмэхэд алдаа: ${e.message}');
+    }
+
+    var notificationsSent = true;
+    try {
       await _notificationService.notifyAllUsersNewAuction(
         auctionId: ref.id,
         title: title.trim(),
         startsAt: startsAt,
       );
-      return ref.id;
-    } on FirebaseException catch (e) {
-      throw FirestoreException('Дуудлага нэмэхэд алдаа: ${e.message}');
+    } catch (e) {
+      notificationsSent = false;
+      debugPrint('Мэдэгдэл илгээхэд алдаа: $e');
     }
+
+    return (auctionId: ref.id, notificationsSent: notificationsSent);
   }
 
   /// Төлөвлөсөн дуудлагыг эхлүүлэх
