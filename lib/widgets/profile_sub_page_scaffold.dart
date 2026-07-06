@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../theme/app_theme.dart';
+import 'go_home_button.dart';
 
-/// Figma дэд хуудас — буцах + гарчиг
+import 'go_home_button.dart';
+
+/// Figma дэд хуудас — буцах + гарчиг + нүүр
 class ProfileSubPageScaffold extends StatelessWidget {
   const ProfileSubPageScaffold({
     super.key,
@@ -22,27 +23,7 @@ class ProfileSubPageScaffold extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/home'),
-                  ),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: AppTheme.headingStyle.copyWith(fontSize: 20),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            SubPageTopBar(title: title),
             Expanded(child: child),
           ],
         ),

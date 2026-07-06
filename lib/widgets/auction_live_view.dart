@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../core/constants/auction_phases.dart';
 import '../core/utils/formatters.dart';
@@ -6,6 +7,7 @@ import '../models/auction_model.dart';
 import '../models/bid_history_model.dart';
 import '../theme/app_theme.dart';
 import 'auction_live_widgets.dart';
+import 'go_home_button.dart';
 import 'phase_legend.dart';
 
 /// Figma live дуудлага дэлгэцийн гол хэсэг
@@ -240,7 +242,21 @@ class _LiveHeader extends StatelessWidget {
               child: const SizedBox(
                 width: 40,
                 height: 40,
-                child: Icon(Icons.close, size: 20),
+                child: Icon(Icons.arrow_back, size: 20),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Material(
+            color: AppTheme.secondary,
+            shape: const CircleBorder(),
+            child: InkWell(
+              onTap: () => context.go('/home'),
+              customBorder: const CircleBorder(),
+              child: const SizedBox(
+                width: 40,
+                height: 40,
+                child: Icon(Icons.home_outlined, size: 20),
               ),
             ),
           ),

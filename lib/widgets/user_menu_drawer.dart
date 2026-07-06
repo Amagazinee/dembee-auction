@@ -167,6 +167,14 @@ class UserMenuDrawer extends StatelessWidget {
                     ],
                     _SectionHeader('данс'),
                     _MenuItem(
+                      icon: Icons.home_outlined,
+                      label: 'Нүүр хуудас',
+                      onTap: () {
+                        onClose();
+                        context.go('/home');
+                      },
+                    ),
+                    _MenuItem(
                       icon: Icons.person_outline,
                       label: 'Профайл засах',
                       onTap: () {
