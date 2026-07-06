@@ -29,6 +29,22 @@ cd dembee-auction
 flutter pub get
 ```
 
+### Апп icon (launcher)
+
+`assets/images/logo.png`-аас Android/iOS/Web icon автоматаар үүсгэнэ:
+
+```powershell
+dart run flutter_launcher_icons
+```
+
+Дараа нь аппыг **бүрэн дахин суулгах** (hot reload хангалтгүй):
+
+```powershell
+flutter run --no-enable-impeller
+```
+
+Эмулятор дээр хуучин Flutter icon харагдвал: апп устгаад дахин `flutter run` хийнэ.
+
 ---
 
 ## 3. Firebase тохируулах
