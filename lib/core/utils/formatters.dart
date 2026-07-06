@@ -127,3 +127,20 @@ String maskName(String name) {
 bool isUrgentCountdown(Duration remaining) {
   return !remaining.isNegative && remaining.inSeconds <= 5;
 }
+
+/// Дуудлага эхлэх цаг — 2026 оны 7 сарын 15 өдөр 14:30
+String formatScheduledStart(DateTime dt) {
+  return '${dt.year} оны ${dt.month} сарын ${dt.day} өдөр '
+      '${dt.hour.toString().padLeft(2, '0')}:'
+      '${dt.minute.toString().padLeft(2, '0')}';
+}
+
+/// Хэзээнээс хойш — 5м өмнө
+String formatTimeAgo(DateTime dt) {
+  final diff = DateTime.now().difference(dt);
+  if (diff.isNegative || diff.inSeconds < 60) return 'одоо';
+  if (diff.inMinutes < 60) return '${diff.inMinutes}м өмнө';
+  if (diff.inHours < 24) return '${diff.inHours}ц өмнө';
+  if (diff.inDays < 7) return '${diff.inDays}ө өмнө';
+  return formatDate(dt);
+}

@@ -31,6 +31,12 @@ class FirestoreFields {
   static const String phaseStartedAt = 'phaseStartedAt';
   static const String totalBids = 'totalBids';
   static const String winCountdownEndsAt = 'winCountdownEndsAt';
+  static const String startsAt = 'startsAt';
+
+  // notifications
+  static const String kind = 'kind';
+  static const String body = 'body';
+  static const String read = 'read';
 
   // auctionHistory
   static const String auctionId = 'auctionId';

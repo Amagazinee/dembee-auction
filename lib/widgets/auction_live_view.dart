@@ -58,15 +58,23 @@ class _AuctionLiveViewState extends State<AuctionLiveView> {
   }
 
   bool get _canBid =>
-      widget.auction.isActive &&
-      !widget.auction.hasEnded &&
-      widget.bidBalance > 0;
+      widget.auction.isBiddable(widget.now) && widget.bidBalance > 0;
 
   bool get _isFinished =>
       widget.auction.isClosed || widget.auction.hasEnded;
 
+  bool get _isPending => widget.auction.isPending;
+
   @override
   Widget build(BuildContext context) {
+    if (_isPending) {
+      return _PendingView(
+        auction: widget.auction,
+        now: widget.now,
+        bidBalance: widget.bidBalance,
+        onClose: widget.onClose,
+      );
+    }
     if (_isFinished) {
       return _FinishedView(
         auction: widget.auction,
@@ -412,6 +420,81 @@ class _RoundCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _PendingView extends StatelessWidget {
+  const _PendingView({
+    required this.auction,
+    required this.now,
+    required this.bidBalance,
+    this.onClose,
+  });
+
+  final AuctionModel auction;
+  final DateTime now;
+  final int bidBalance;
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final startsAt = auction.startsAt ?? now;
+    final remaining = startsAt.difference(now);
+
+    return Column(
+      children: [
+        _LiveHeader(
+          bidBalance: bidBalance,
+          onClose: onClose ?? () => Navigator.of(context).maybePop(),
+        ),
+        Expanded(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.schedule,
+                    size: 56,
+                    color: Color(0xFF60A5FA),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'ДУУДЛАГА ЭХЛЭХЭД',
+                    style: AppTheme.headingStyle.copyWith(fontSize: 18),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    formatScheduledStart(startsAt),
+                    textAlign: TextAlign.center,
+                    style: AppTheme.bodyStyle.copyWith(
+                      fontSize: 14,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    remaining.isNegative
+                        ? '00 : 00 : 00 : 00'
+                        : formatPhaseCountdown(remaining),
+                    style: AppTheme.monoStyle.copyWith(fontSize: 28),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    auction.title,
+                    textAlign: TextAlign.center,
+                    style: AppTheme.bodyStyle.copyWith(
+                      color: AppTheme.mutedForeground,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -19,6 +19,7 @@ class AppConstants {
   static const String auctionsCollection = 'auctions';
   static const String auctionHistoryCollection = 'auctionHistory';
   static const String purchasesCollection = 'purchases';
+  static const String notificationsCollection = 'notifications';
 
   // Auction төлөв
   static const String statusActive = 'active';

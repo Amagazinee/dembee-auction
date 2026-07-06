@@ -6,9 +6,11 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/constants/auction_categories.dart';
 import '../../core/errors/app_exception.dart';
+import '../../core/utils/formatters.dart';
 import '../../services/auction_service.dart';
 import '../../services/storage_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/auction_schedule_picker.dart';
 import '../../widgets/go_home_button.dart';
 
 /// Figma — Шинэ дуудлага нэмэх (тусдаа дэлгэц)
@@ -41,6 +43,20 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
   int _bidIncrement = 2;
   File? _imageFile;
   bool _submitting = false;
+  late DateTime _startsAt;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _startsAt = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      now.hour,
+      now.minute,
+    ).add(const Duration(hours: 1));
+  }
 
   @override
   void dispose() {
@@ -77,6 +93,16 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (_startsAt.isBefore(DateTime.now())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Эхлэх цаг ирээдүйд байх ёстой'),
+          backgroundColor: AppTheme.destructive,
+        ),
+      );
+      return;
+    }
+
     setState(() => _submitting = true);
 
     try {
@@ -96,14 +122,17 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
         category: _category,
         description: _descriptionController.text,
         bidIncrement: _bidIncrement,
+        startsAt: _startsAt,
         imageUrl: imageUrl,
       );
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Дуудлага амжилттай нэмэгдлээ'),
+        SnackBar(
+          content: Text(
+            'Дуудлага төлөвлөгдлөө · ${formatScheduledStart(_startsAt)}',
+          ),
           backgroundColor: AppTheme.secondary,
         ),
       );
@@ -161,7 +190,7 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
                   color: AppTheme.primary.withValues(alpha: 0.08),
                 ),
                 child: Text(
-                  'Зөвхөн админ нэмэх эрхтэй · Бүх дуудлага 1-р үеэс эхэлнэ',
+                  'Зөвхөн админ нэмэх эрхтэй · Эхлэх цагт автоматаар 1-р үеэс эхэлнэ',
                   style: AppTheme.bodyStyle.copyWith(
                     fontSize: 12,
                     color: AppTheme.primary,
@@ -309,6 +338,21 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
                 ),
               ),
               const SizedBox(height: 28),
+              _SectionLabel('ДУУДЛАГА ЭХЛЭХ ЦАГ'),
+              const SizedBox(height: 8),
+              Text(
+                'Сар · өдөр · цаг · минутаар эхлэх цагийг тохируулна',
+                style: AppTheme.bodyStyle.copyWith(
+                  fontSize: 12,
+                  color: AppTheme.mutedForeground,
+                ),
+              ),
+              const SizedBox(height: 12),
+              AuctionSchedulePicker(
+                value: _startsAt,
+                onChanged: (dt) => setState(() => _startsAt = dt),
+              ),
+              const SizedBox(height: 28),
               ElevatedButton.icon(
                 onPressed: _submitting ? null : _submit,
                 icon: _submitting
@@ -322,7 +366,7 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
                       )
                     : const Icon(Icons.gavel, size: 18),
                 label: Text(
-                  _submitting ? 'Нэмж байна...' : 'Дуудлага худалдаанд нэмэх',
+                  _submitting ? 'Нэмж байна...' : 'Дуудлага төлөвлөж нэмэх',
                 ),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),

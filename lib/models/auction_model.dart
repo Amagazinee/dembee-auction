@@ -28,6 +28,7 @@ class AuctionModel {
     this.phaseStartedAt,
     this.totalBids = 0,
     this.winCountdownEndsAt,
+    this.startsAt,
   });
 
   final String id;
@@ -51,13 +52,26 @@ class AuctionModel {
   final DateTime? phaseStartedAt;
   final int totalBids;
   final DateTime? winCountdownEndsAt;
+  final DateTime? startsAt;
 
   bool get isActive => status == AppConstants.statusActive;
+  bool get isPending => status == AppConstants.statusPending;
   bool get isClosed => status == AppConstants.statusClosed;
   bool get hasEnded => DateTime.now().isAfter(endsAt);
 
+  /// Төлөвлөсөн эхлэх цаг ирээгүй
+  bool isBeforeStart(DateTime now) =>
+      startsAt != null && now.isBefore(startsAt!);
+
+  /// Санал өгөх боломжтой
+  bool isBiddable(DateTime now) =>
+      isActive && !isBeforeStart(now) && !hasEnded;
+
   /// Админ — одоо явагдаж буй дуудлага
   bool get isOngoing => isActive && !hasEnded;
+
+  /// Төлөвлөгдсөн (эхлээгүй) дуудлага
+  bool isScheduled(DateTime now) => isPending || (isActive && isBeforeStart(now));
 
   /// Админ — дууссан дуудлага
   bool get isFinished => isClosed || hasEnded;
@@ -136,6 +150,7 @@ class AuctionModel {
       totalBids: (data[FirestoreFields.totalBids] as num?)?.toInt() ?? 0,
       winCountdownEndsAt:
           _parseTimestampOptional(data[FirestoreFields.winCountdownEndsAt]),
+      startsAt: _parseTimestampOptional(data[FirestoreFields.startsAt]),
     );
   }
 

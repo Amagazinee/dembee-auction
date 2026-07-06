@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../providers/notification_notifier.dart';
 import '../services/firebase_service.dart';
 
 /// GoRouter-д auth өөрчлөлтийг мэдэгдэх
@@ -21,9 +22,19 @@ class AuthStateNotifier extends ChangeNotifier {
     if (_subscription != null) return;
     if (!FirebaseService.isInitialized) return;
 
-    _subscription = FirebaseAuth.instance.authStateChanges().listen((_) {
+    _subscription = FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (user != null) {
+        NotificationNotifier.instance.attach(user.uid);
+      } else {
+        NotificationNotifier.instance.detach();
+      }
       notifyListeners();
     });
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      NotificationNotifier.instance.attach(user.uid);
+    }
   }
 
   User? get currentUser {

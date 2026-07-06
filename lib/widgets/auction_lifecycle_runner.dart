@@ -42,7 +42,20 @@ class _AuctionLifecycleRunnerState extends State<AuctionLifecycleRunner> {
   Future<void> _tick() async {
     final now = DateTime.now();
     for (final auction in widget.auctions) {
-      if (!auction.isActive || auction.hasEnded) continue;
+      if (auction.isClosed || auction.hasEnded) continue;
+
+      if (auction.isPending) {
+        if (_processing.contains(auction.id)) continue;
+        _processing.add(auction.id);
+        try {
+          await widget.service.activateScheduledAuctionIfDue(auction.id);
+        } finally {
+          _processing.remove(auction.id);
+        }
+        continue;
+      }
+
+      if (!auction.isActive) continue;
       if (!auction.lifecycleCheckDue(now)) continue;
       if (_processing.contains(auction.id)) continue;
 
