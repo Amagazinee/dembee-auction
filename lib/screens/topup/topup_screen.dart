@@ -67,6 +67,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
             bidBalance: balance,
             user: user,
             showAdminBadge: user?.isAdmin ?? false,
+            showHomeButton: true,
           ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),

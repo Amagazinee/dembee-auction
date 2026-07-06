@@ -5,6 +5,7 @@ import '../models/user_model.dart';
 import '../providers/notification_notifier.dart';
 import '../theme/app_theme.dart';
 import 'dembee_logo.dart';
+import 'go_home_button.dart';
 import 'notif_drawer.dart';
 import 'user_menu_drawer.dart';
 
@@ -16,6 +17,7 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.user,
     this.showAdminBadge = false,
     this.showAddAuction = false,
+    this.showHomeButton = false,
     this.onAddAuction,
   });
 
@@ -23,6 +25,7 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final UserModel? user;
   final bool showAdminBadge;
   final bool showAddAuction;
+  final bool showHomeButton;
   final VoidCallback? onAddAuction;
 
   @override
@@ -41,9 +44,12 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
         preferredSize: const Size.fromHeight(1),
         child: Container(height: 1, color: AppTheme.border),
       ),
-      title: Row(
-        children: [
-          const DembeeLogo(size: 28, textSize: 16),
+      title: InkWell(
+        onTap: showHomeButton ? null : () => context.go('/home'),
+        borderRadius: BorderRadius.circular(4),
+        child: Row(
+          children: [
+            const DembeeLogo(size: 28, textSize: 16),
           if (showAdminBadge) ...[
             const SizedBox(width: 8),
             Container(
@@ -73,9 +79,10 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           ],
-        ],
+        ),
       ),
       actions: [
+        if (showHomeButton) const GoHomeIconButton(compact: true),
         InkWell(
           onTap: () => context.go('/topup'),
           borderRadius: BorderRadius.circular(4),

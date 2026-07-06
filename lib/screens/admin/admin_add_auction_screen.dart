@@ -9,6 +9,7 @@ import '../../core/errors/app_exception.dart';
 import '../../services/auction_service.dart';
 import '../../services/storage_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/go_home_button.dart';
 
 /// Figma — Шинэ дуудлага нэмэх (тусдаа дэлгэц)
 class AdminAddAuctionScreen extends StatefulWidget {
@@ -135,6 +136,9 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
           'Шинэ дуудлага нэмэх',
           style: AppTheme.headingStyle.copyWith(fontSize: 18),
         ),
+        actions: const [
+          GoHomeIconButton(compact: true),
+        ],
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
           child: Divider(height: 1, color: AppTheme.border),

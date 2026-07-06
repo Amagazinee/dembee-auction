@@ -10,6 +10,7 @@ import '../../services/auction_service.dart';
 import '../../services/credits_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/dembee_logo.dart';
+import '../../widgets/go_home_button.dart';
 import '../../widgets/loading_widget.dart';
 import 'admin_auctions_tab.dart';
 import 'admin_transactions_tab.dart';
@@ -73,8 +74,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             backgroundColor: AppTheme.background,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.go('/home'),
+              tooltip: 'Буцах',
+              onPressed: () => context.pop(),
             ),
+            actions: const [
+              GoHomeIconButton(compact: true),
+            ],
             title: Row(
               children: [
                 const DembeeLogo(size: 24, textSize: 14),

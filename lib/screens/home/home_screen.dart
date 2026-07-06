@@ -72,6 +72,31 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Widget _buildAuctionCard({
+    required AuctionModel auction,
+    required int bidBalance,
+    required DateTime now,
+    required UserModel? user,
+    required List<BidHistoryModel> myBids,
+    required List<BidHistoryModel> recentBids,
+    required bool expanded,
+  }) {
+    return AuctionCard(
+      auction: auction,
+      bidBalance: bidBalance,
+      tick: now,
+      expanded: expanded,
+      isBidding: _biddingAuctionId == auction.id,
+      recentBids: recentBids
+          .where((b) => b.auctionId == auction.id)
+          .toList(),
+      currentUserUid: user?.uid,
+      myBidCount:
+          myBids.where((b) => b.auctionId == auction.id).length,
+      onQuickBid: () => _quickBid(auction),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<UserModel?>(
@@ -158,6 +183,37 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ),
                                     )
+                                  else if (crossCount == 1)
+                                    SliverPadding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        12,
+                                        0,
+                                        12,
+                                        16,
+                                      ),
+                                      sliver: SliverList(
+                                        delegate: SliverChildBuilderDelegate(
+                                          (context, index) {
+                                            final auction = auctions[index];
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 12,
+                                              ),
+                                              child: _buildAuctionCard(
+                                                auction: auction,
+                                                bidBalance: bidBalance,
+                                                now: now,
+                                                user: user,
+                                                myBids: myBids,
+                                                recentBids: recentBids,
+                                                expanded: false,
+                                              ),
+                                            );
+                                          },
+                                          childCount: auctions.length,
+                                        ),
+                                      ),
+                                    )
                                   else
                                     SliverPadding(
                                       padding: const EdgeInsets.fromLTRB(
@@ -168,43 +224,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                       sliver: SliverGrid(
                                         gridDelegate:
-                                            SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: crossCount,
+                                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
                                           mainAxisSpacing: 12,
                                           crossAxisSpacing: 12,
-                                          mainAxisExtent:
-                                              crossCount == 1 ? 520 : 560,
+                                          mainAxisExtent: 460,
                                         ),
                                         delegate:
                                             SliverChildBuilderDelegate(
                                           (context, index) {
                                             final auction = auctions[index];
-                                            return AuctionCard(
+                                            return _buildAuctionCard(
                                               auction: auction,
                                               bidBalance: bidBalance,
-                                              tick: now,
-                                              expanded: crossCount == 1,
-                                              isBidding:
-                                                  _biddingAuctionId ==
-                                                      auction.id,
-                                              recentBids: recentBids
-                                                  .where(
-                                                    (b) =>
-                                                        b.auctionId ==
-                                                        auction.id,
-                                                  )
-                                                  .toList(),
-                                              currentUserUid:
-                                                  user?.uid,
-                                              myBidCount: myBids
-                                                  .where(
-                                                    (b) =>
-                                                        b.auctionId ==
-                                                        auction.id,
-                                                  )
-                                                  .length,
-                                              onQuickBid: () =>
-                                                  _quickBid(auction),
+                                              now: now,
+                                              user: user,
+                                              myBids: myBids,
+                                              recentBids: recentBids,
+                                              expanded: false,
                                             );
                                           },
                                           childCount: auctions.length,
