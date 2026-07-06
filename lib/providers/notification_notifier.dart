@@ -12,14 +12,14 @@ class NotificationNotifier extends ChangeNotifier {
     AppNotification(
       id: '1',
       kind: 'winner',
-      title: '🏆 Ялагч тодорлоо!',
+      title: '🏆 Ялагч тодорхойлогдлоо!',
       body: 'Apple Watch Ultra 2 — ялагч: Э.Болд***, үнэ: ₮22,400',
       timeAgo: '1м өмнө',
     ),
     AppNotification(
       id: '2',
       kind: 'winner',
-      title: '🏆 Ялагч тодорлоо!',
+      title: '🏆 Ялагч тодорхойлогдлоо!',
       body: 'DJI Mini 4 Pro Дрон — ялагч: Т.Баяр***, үнэ: ₮18,600',
       timeAgo: '1м өмнө',
     ),

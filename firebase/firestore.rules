@@ -29,6 +29,33 @@ service cloud.firestore {
       return delta in [10, 20, 40, 60, 100, 200];
     }
 
+    function isLifecycleWinnerUpdate() {
+      return resource.data.status == 'active'
+        && request.resource.data.status == 'closed'
+        && (
+          (
+            request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['status', 'winnerUid', 'winnerName', 'finalPrice', 'updatedAt'])
+            && resource.data.get('lastBidUid', '') != ''
+            && request.resource.data.winnerUid == resource.data.lastBidUid
+          )
+          ||
+          (
+            request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['status', 'updatedAt'])
+            && !('winnerUid' in request.resource.data)
+          )
+        );
+    }
+
+    function isLifecyclePhaseAdvance() {
+      return resource.data.status == 'active'
+        && request.resource.data.status == 'active'
+        && request.resource.data.phase == resource.data.get('phase', 1) + 1
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['phase', 'phaseStartedAt', 'winCountdownEndsAt', 'updatedAt']);
+    }
+
     // --- users ---
     match /users/{userId} {
       allow read: if isSignedIn();
@@ -87,6 +114,10 @@ service cloud.firestore {
 
       allow update: if isSignedIn() && (
         isAdmin()
+        ||
+        isLifecycleWinnerUpdate()
+        ||
+        isLifecyclePhaseAdvance()
         ||
         (
           resource.data.status == 'active'

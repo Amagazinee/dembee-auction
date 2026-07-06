@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/constants/auction_phases.dart';
 import '../theme/app_theme.dart';
 
-/// Figma "ҮЕ ДЭС ДАРАА · ЯЛАГЧ ТОДРОХ ХУГАЦАА" ribbon
+/// Figma "ҮЕ ДЭС ДАРАА · ЯЛАГЧ ТОДОРХОЙЛОХ ХУГАЦАА" ribbon
 class PhaseLegend extends StatelessWidget {
   const PhaseLegend({super.key, this.embedded = false});
 
@@ -36,7 +36,7 @@ class PhaseLegend extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ҮЕ ДЭС ДАРАА · ЯЛАГЧ ТОДРОХ ХУГАЦАА',
+            'ҮЕ ДЭС ДАРАА · ЯЛАГЧ ТОДОРХОЙЛОХ ХУГАЦАА',
             style: AppTheme.bodyStyle.copyWith(
               fontSize: 10,
               letterSpacing: 1,

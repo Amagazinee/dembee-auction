@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../core/auction_lifecycle.dart';
 import '../core/constants/app_constants.dart';
 import '../core/constants/auction_categories.dart';
 import '../core/constants/auction_phases.dart';
@@ -231,7 +232,32 @@ class AuctionService {
     }
   }
 
-  /// Админ — ялагч гараар тодруулах (Cloud Functions deploy хийгээгүй үед)
+  /// Тооллого дууссан бол lifecycle ажиллуулах (CF-гүй горимд)
+  Future<bool> processAuctionLifecycleIfDue(String auctionId) async {
+    final ref = _auctions.doc(auctionId);
+
+    try {
+      return await _firestore.runTransaction((transaction) async {
+        final snap = await transaction.get(ref);
+        if (!snap.exists) return false;
+
+        final data = snap.data()!;
+        if (!auctionLifecycleCheckDue(data, DateTime.now())) {
+          return false;
+        }
+
+        final result = evaluateAuctionLifecycle(data, DateTime.now());
+        if (result.updates == null) return false;
+
+        transaction.update(ref, result.updates!);
+        return true;
+      });
+    } on FirebaseException {
+      return false;
+    }
+  }
+
+  /// Админ — ялагч гараар тодорхойлох (Cloud Functions deploy хийгээгүй үед)
   Future<void> declareWinnerAdmin(String auctionId) async {
     final ref = _auctions.doc(auctionId);
 
@@ -251,7 +277,7 @@ class AuctionService {
         final lastBidUid = data[FirestoreFields.lastBidUid] as String?;
         if (lastBidUid == null || lastBidUid.isEmpty) {
           throw const FirestoreException(
-            'Санал байхгүй тул ялагч тодруулах боломжгүй',
+            'Санал байхгүй тул ялагч тодорхойлох боломжгүй',
           );
         }
 
@@ -267,7 +293,7 @@ class AuctionService {
         });
       });
     } on FirebaseException catch (e) {
-      throw FirestoreException('Ялагч тодруулахад алдаа: ${e.message}');
+      throw FirestoreException('Ялагч тодорхойлоход алдаа: ${e.message}');
     }
   }
 

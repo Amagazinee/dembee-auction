@@ -102,8 +102,7 @@ class _AuctionLiveViewState extends State<AuctionLiveView> {
                     phaseStart,
                     phaseConfig.duration,
                   ),
-                  winCountdownLabel: formatWinCountdownMs(winRemaining),
-                  winExpired: winRemaining.isNegative,
+                  winRemaining: winRemaining,
                   phaseInfoExpanded: _phaseInfoExpanded,
                   onTogglePhaseInfo: () =>
                       setState(() => _phaseInfoExpanded = !_phaseInfoExpanded),
@@ -125,6 +124,9 @@ class _AuctionLiveViewState extends State<AuctionLiveView> {
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1,
+                    color: isUrgentCountdown(phaseRemaining)
+                        ? AppTheme.destructive
+                        : AppTheme.foreground,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -292,21 +294,23 @@ class _RoundCard extends StatelessWidget {
   const _RoundCard({
     required this.phase,
     required this.phaseTimeRange,
-    required this.winCountdownLabel,
-    required this.winExpired,
+    required this.winRemaining,
     required this.phaseInfoExpanded,
     required this.onTogglePhaseInfo,
   });
 
   final int phase;
   final String phaseTimeRange;
-  final String winCountdownLabel;
-  final bool winExpired;
+  final Duration winRemaining;
   final bool phaseInfoExpanded;
   final VoidCallback onTogglePhaseInfo;
 
   @override
   Widget build(BuildContext context) {
+    final winExpired = winRemaining.isNegative;
+    final winUrgent = isUrgentCountdown(winRemaining);
+    final winCountdownLabel = formatWinCountdownMs(winRemaining);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -346,11 +350,13 @@ class _RoundCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            winExpired ? 'Ялагч тодорлоо' : 'Ялагч тодроход',
+            winExpired ? 'Ялагч тодорхойлогдлоо' : 'Ялагч тодорхойлоход',
             textAlign: TextAlign.center,
             style: AppTheme.bodyStyle.copyWith(
               fontSize: 12,
-              color: AppTheme.mutedForeground,
+              color: winUrgent && !winExpired
+                  ? AppTheme.destructive
+                  : AppTheme.mutedForeground,
             ),
           ),
           const SizedBox(height: 4),
@@ -360,7 +366,11 @@ class _RoundCard extends StatelessWidget {
             style: AppTheme.monoStyle.copyWith(
               fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: winExpired ? AppTheme.primary : AppTheme.foreground,
+              color: winExpired
+                  ? AppTheme.primary
+                  : winUrgent
+                      ? AppTheme.destructive
+                      : AppTheme.foreground,
             ),
           ),
           const SizedBox(height: 12),
@@ -439,7 +449,7 @@ class _FinishedView extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'ЯЛАГЧ ТОДОРЛОО',
+                    'ЯЛАГЧ ТОДОРХОЙЛОГДЛОО',
                     style: AppTheme.headingStyle.copyWith(fontSize: 20),
                   ),
                   if (auction.winnerName != null) ...[

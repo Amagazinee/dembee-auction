@@ -9,6 +9,7 @@ import '../../services/auth_service.dart';
 import '../../services/credits_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auction_live_view.dart';
+import '../../widgets/auction_lifecycle_runner.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/loading_widget.dart';
 import '../../widgets/millisecond_ticker.dart';
@@ -65,7 +66,6 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
         return Scaffold(
           backgroundColor: AppTheme.background,
           body: SafeArea(
-            top: false,
             child: StreamBuilder<AuctionModel?>(
               stream: _auctionService.watchAuction(widget.auctionId),
               builder: (context, auctionSnap) {
@@ -85,20 +85,24 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                   builder: (context, historySnap) {
                     final bids = historySnap.data ?? [];
 
-                    return MillisecondTicker(
-                      builder: (context, now) {
-                        return AuctionLiveView(
-                          auction: auction,
-                          bids: bids,
-                          bidBalance: bidBalance,
-                          now: now,
-                          currentUserUid: user?.uid,
-                          isSubmitting: _isBidding,
-                          errorMessage: _bidError,
-                          onPlaceBid: (amount) => _placeBid(auction, amount),
-                          onClose: () => context.pop(),
-                        );
-                      },
+                    return AuctionLifecycleRunner(
+                      auctions: [auction],
+                      service: _auctionService,
+                      child: MillisecondTicker(
+                        builder: (context, now) {
+                          return AuctionLiveView(
+                            auction: auction,
+                            bids: bids,
+                            bidBalance: bidBalance,
+                            now: now,
+                            currentUserUid: user?.uid,
+                            isSubmitting: _isBidding,
+                            errorMessage: _bidError,
+                            onPlaceBid: (amount) => _placeBid(auction, amount),
+                            onClose: () => context.pop(),
+                          );
+                        },
+                      ),
                     );
                   },
                 );

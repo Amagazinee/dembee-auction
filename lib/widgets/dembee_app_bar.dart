@@ -79,6 +79,7 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           ],
+          ],
         ),
       ),
       actions: [

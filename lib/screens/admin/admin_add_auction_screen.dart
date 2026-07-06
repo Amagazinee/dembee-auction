@@ -229,7 +229,7 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
               const SizedBox(height: 24),
               _SectionLabel('БАРААНЫ МЭДЭЭЛЭЛ'),
               const SizedBox(height: 12),
-              _FieldLabel('Бараа нэр *'),
+              _FieldLabel('Барааны нэр *'),
               TextFormField(
                 controller: _titleController,
                 style: AppTheme.bodyStyle,

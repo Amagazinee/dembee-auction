@@ -1,4 +1,4 @@
-/// Ялагч тодрох тооллого — MM.SS.mmm
+/// Ялагч тодорхойлох тооллого — MM.SS.mmm
 String formatWinCountdownMs(Duration duration) {
   if (duration.isNegative) return '00.000';
   final totalMs = duration.inMilliseconds;
@@ -121,4 +121,9 @@ String maskName(String name) {
   final initial = first.isNotEmpty ? first[0] : '';
   final lastPart = last.length > 1 ? last.substring(0, last.length.clamp(0, 4)) : last;
   return '$initial.$lastPart***';
+}
+
+/// Тооллогын сүүлийн 5 секунд улаанаар харуулах
+bool isUrgentCountdown(Duration remaining) {
+  return !remaining.isNegative && remaining.inSeconds <= 5;
 }
