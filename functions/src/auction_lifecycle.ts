@@ -39,7 +39,8 @@ function addSeconds(
  * Дүрэм:
  * - winCountdownEndsAt дууссан + lastBidUid байвал → ялагч тодруулах
  * - winCountdownEndsAt дууссан + санал байхгүй → дараагийн үе
- * - үеийн хугацаа дууссан → дараагийн үе (ялагч тодрохгүй)
+ * - 1–7-р үеийн хугацаа дууссан → дараагийн үе (ялагч тодрохгүй)
+ * - 8-р үеийн хугацаа дууссан → сүүлийн санал өгсөн хүн ялагч
  */
 export function evaluateAuctionLifecycle(
   data: AuctionData,
@@ -80,10 +81,22 @@ export function evaluateAuctionLifecycle(
       if (phase < TOTAL_PHASES) {
         return buildPhaseAdvance(data, phase, now);
       }
+      if (data.lastBidUid) {
+        return {
+          action: "winner",
+          updates: {
+            status: STATUS_CLOSED,
+            winnerUid: data.lastBidUid,
+            winnerName: data.lastBidder ?? "",
+            finalPrice: (data.price as number) ?? 0,
+            updatedAt: now,
+          },
+        };
+      }
       return {
-        action: "phase_extend",
+        action: "winner",
         updates: {
-          phaseStartedAt: now,
+          status: STATUS_CLOSED,
           updatedAt: now,
         },
       };

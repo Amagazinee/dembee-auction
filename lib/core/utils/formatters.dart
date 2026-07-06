@@ -122,3 +122,8 @@ String maskName(String name) {
   final lastPart = last.length > 1 ? last.substring(0, last.length.clamp(0, 4)) : last;
   return '$initial.$lastPart***';
 }
+
+/// Тооллогын сүүлийн 5 секунд улаанаар харуулах
+bool isUrgentCountdown(Duration remaining) {
+  return !remaining.isNegative && remaining.inSeconds <= 5;
+}

@@ -156,7 +156,13 @@ class AuctionCard extends StatelessWidget {
                                   tick: tick,
                                   style: AppTheme.monoStyle.copyWith(
                                     fontSize: 10,
-                                    color: AppTheme.foreground,
+                                    color: tick != null &&
+                                            isUrgentCountdown(
+                                              auction.effectivePhaseEndsAt
+                                                  .difference(tick!),
+                                            )
+                                        ? AppTheme.destructive
+                                        : AppTheme.foreground,
                                   ),
                                 ),
                               ],
@@ -413,6 +419,31 @@ class _FinishedCard extends StatelessWidget {
                       auction.title,
                       style: AppTheme.headingStyle.copyWith(fontSize: 13),
                     ),
+                    if (auction.winnerName != null) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.emoji_events,
+                            size: 14,
+                            color: AppTheme.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Ялагч: ${auction.winnerName!}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTheme.bodyStyle.copyWith(
+                                fontSize: 12,
+                                color: AppTheme.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     PhaseBar(
                       compact: true,

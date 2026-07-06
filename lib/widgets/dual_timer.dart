@@ -77,6 +77,7 @@ class _DualTimerState extends State<DualTimer> {
         ? widget.winCountdownEndsAt.difference(widget.tick!)
         : _remaining;
     final isExpired = remaining.isNegative;
+    final isUrgent = isUrgentCountdown(remaining);
     final compact = widget.compact;
 
     return Container(
@@ -96,9 +97,11 @@ class _DualTimerState extends State<DualTimer> {
         color: widget.gradient ? null : const Color(0xFF1A2A3A),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: widget.gradient
-              ? const Color(0xFFF97316).withValues(alpha: 0.5)
-              : const Color(0xFF2563EB).withValues(alpha: 0.4),
+          color: isUrgent && !isExpired
+              ? AppTheme.destructive
+              : widget.gradient
+                  ? const Color(0xFFF97316).withValues(alpha: 0.5)
+                  : const Color(0xFF2563EB).withValues(alpha: 0.4),
         ),
       ),
       child: Column(
@@ -109,9 +112,11 @@ class _DualTimerState extends State<DualTimer> {
             style: AppTheme.bodyStyle.copyWith(
               fontSize: compact ? 8 : 10,
               letterSpacing: 1.2,
-              color: widget.gradient
-                  ? const Color(0xFFFDBA74)
-                  : const Color(0xFF60A5FA),
+              color: isUrgent && !isExpired
+                  ? AppTheme.destructive
+                  : widget.gradient
+                      ? const Color(0xFFFDBA74)
+                      : const Color(0xFF60A5FA),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -120,9 +125,13 @@ class _DualTimerState extends State<DualTimer> {
             isExpired ? '00:00' : formatDuration(remaining),
             style: AppTheme.monoStyle.copyWith(
               fontSize: compact ? 16 : 28,
-              color: widget.gradient
-                  ? const Color(0xFFFBBF24)
-                  : const Color(0xFF93C5FD),
+              color: isExpired
+                  ? AppTheme.primary
+                  : isUrgent
+                      ? AppTheme.destructive
+                      : widget.gradient
+                          ? const Color(0xFFFBBF24)
+                          : const Color(0xFF93C5FD),
               fontWeight: FontWeight.bold,
             ),
           ),

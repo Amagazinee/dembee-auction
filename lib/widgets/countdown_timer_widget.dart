@@ -81,8 +81,13 @@ class _CountdownTimerWidgetState extends State<CountdownTimerWidget> {
     final remaining =
         widget.tick != null ? widget.endsAt.difference(widget.tick!) : _remaining;
     final isFinished = remaining.isNegative;
+    final isUrgent = isUrgentCountdown(remaining);
     final defaultStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
-          color: isFinished ? Colors.redAccent : AppTheme.gold,
+          color: isFinished
+              ? Colors.redAccent
+              : isUrgent
+                  ? AppTheme.destructive
+                  : AppTheme.gold,
           fontWeight: FontWeight.bold,
         );
 

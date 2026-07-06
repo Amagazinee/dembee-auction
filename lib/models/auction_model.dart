@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../core/auction_lifecycle.dart' as lifecycle;
 import '../core/constants/app_constants.dart';
 import '../core/constants/auction_phases.dart';
 import '../core/constants/firestore_fields.dart';
@@ -89,6 +90,25 @@ class AuctionModel {
         : '00:${secs.toString().padLeft(2, '0')}';
     return 'санал бүрт $timeLabel-с дахин эхэлнэ';
   }
+
+  /// Lifecycle шалгах шаардлагатай эсэх
+  bool lifecycleCheckDue(DateTime now) {
+    return lifecycle.auctionLifecycleCheckDue(_toLifecycleMap(), now);
+  }
+
+  Map<String, dynamic> _toLifecycleMap() => {
+        FirestoreFields.status: status,
+        FirestoreFields.phase: phase,
+        FirestoreFields.phaseStartedAt: phaseStartedAt != null
+            ? Timestamp.fromDate(phaseStartedAt!)
+            : null,
+        FirestoreFields.winCountdownEndsAt: winCountdownEndsAt != null
+            ? Timestamp.fromDate(winCountdownEndsAt!)
+            : null,
+        FirestoreFields.lastBidUid: lastBidUid,
+        FirestoreFields.lastBidder: lastBidder,
+        FirestoreFields.price: price,
+      };
 
   factory AuctionModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};

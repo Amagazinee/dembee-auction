@@ -10,6 +10,7 @@ import '../../services/auth_service.dart';
 import '../../services/credits_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auction_card.dart';
+import '../../widgets/auction_lifecycle_runner.dart';
 import '../../widgets/dembee_app_bar.dart';
 import '../../widgets/error_widget.dart';
 import '../../widgets/home_stats_row.dart';
@@ -151,10 +152,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     builder: (context, recentSnap) {
                       final recentBids = recentSnap.data ?? [];
 
-                      return SecondTicker(
-                        builder: (context, now) {
-                          return LayoutBuilder(
-                            builder: (context, constraints) {
+                      return AuctionLifecycleRunner(
+                        auctions: auctions,
+                        service: _auctionService,
+                        child: SecondTicker(
+                          builder: (context, now) {
+                            return LayoutBuilder(
+                              builder: (context, constraints) {
                               final wide = constraints.maxWidth >= 900;
                               final crossCount =
                                   constraints.maxWidth >= 700 ? 2 : 1;
@@ -302,6 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             },
                           );
                         },
+                        ),
                       );
                     },
                   );
