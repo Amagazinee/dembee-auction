@@ -65,7 +65,6 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
         return Scaffold(
           backgroundColor: AppTheme.background,
           body: SafeArea(
-            top: false,
             child: StreamBuilder<AuctionModel?>(
               stream: _auctionService.watchAuction(widget.auctionId),
               builder: (context, auctionSnap) {
