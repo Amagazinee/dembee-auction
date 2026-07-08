@@ -27,6 +27,11 @@ AuctionLifecycleResult evaluateAuctionLifecycle(
     return const AuctionLifecycleResult();
   }
 
+  final startsAt = _parseTimestamp(data[FirestoreFields.startsAt]);
+  if (startsAt != null && now.isBefore(startsAt)) {
+    return const AuctionLifecycleResult();
+  }
+
   final phase = ((data[FirestoreFields.phase] as num?)?.toInt() ?? 1)
       .clamp(1, AuctionPhases.totalPhases);
   final config = AuctionPhases.forPhase(phase);
@@ -111,6 +116,9 @@ DateTime? _parseTimestamp(dynamic value) {
 bool auctionLifecycleCheckDue(Map<String, dynamic> data, DateTime now) {
   final status = data[FirestoreFields.status] as String? ?? '';
   if (status != AppConstants.statusActive) return false;
+
+  final startsAt = _parseTimestamp(data[FirestoreFields.startsAt]);
+  if (startsAt != null && now.isBefore(startsAt)) return false;
 
   final phase = ((data[FirestoreFields.phase] as num?)?.toInt() ?? 1)
       .clamp(1, AuctionPhases.totalPhases);

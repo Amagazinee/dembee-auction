@@ -36,7 +36,8 @@ class AdminAuctionsTab extends StatelessWidget {
         }
 
         final auctions = snap.data ?? [];
-        final scheduled = auctions.where((a) => a.isPending).toList();
+        final now = DateTime.now();
+        final scheduled = auctions.where((a) => a.isScheduled(now)).toList();
         final ongoing = auctions.where((a) => a.isOngoing).toList();
         final finished = auctions.where((a) => a.isFinished).toList();
 
@@ -306,7 +307,8 @@ class _AdminAuctionCardState extends State<_AdminAuctionCard> {
   @override
   Widget build(BuildContext context) {
     final auction = widget.auction;
-    final scheduled = auction.isPending;
+    final now = DateTime.now();
+    final scheduled = auction.isScheduled(now);
     final ongoing = auction.isOngoing;
     final statusLabel =
         scheduled ? 'Төлөвлөсөн' : (ongoing ? 'Идэвхтэй' : 'Дууссан');

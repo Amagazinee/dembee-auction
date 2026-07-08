@@ -93,7 +93,9 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_startsAt.isBefore(DateTime.now())) {
+    if (_startsAt.isBefore(
+      DateTime.now().subtract(const Duration(seconds: 30)),
+    )) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Эхлэх цаг ирээдүйд байх ёстой'),
@@ -116,7 +118,7 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
         );
       }
 
-      await _auctionService.createAuction(
+      final result = await _auctionService.createAuction(
         docId: auctionId,
         title: _titleController.text,
         category: _category,
@@ -136,6 +138,18 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
           backgroundColor: AppTheme.secondary,
         ),
       );
+      if (!result.notificationsSent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Дуудлага нэмэгдсэн. Мэдэгдэл илгээхэд алдаа гарлаа — '
+              'firebase deploy --only firestore:rules ажиллуулна уу.',
+            ),
+            backgroundColor: AppTheme.destructive,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
       context.pop();
     } on AppException catch (e) {
       if (mounted) {
