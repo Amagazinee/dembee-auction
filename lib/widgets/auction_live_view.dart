@@ -223,6 +223,7 @@ class _AuctionLiveViewState extends State<AuctionLiveView> {
           },
           onSubmit: () => widget.onPlaceBid(_selectedAmount),
         ),
+        SizedBox(height: MediaQuery.viewPaddingOf(context).bottom),
       ],
     );
   }

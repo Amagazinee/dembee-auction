@@ -74,15 +74,13 @@ class AuctionCard extends StatelessWidget {
             border: Border.all(color: AppTheme.border),
             borderRadius: BorderRadius.circular(AppTheme.radius),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _ActiveImage(auction: auction),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+          child: _BoundedCardColumn(
+            image: _ActiveImage(auction: auction),
+            body: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                     Text(
                       auction.title,
                       maxLines: expanded ? 3 : 2,
@@ -290,10 +288,48 @@ class AuctionCard extends StatelessWidget {
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
-      ),
+    );
+  }
+}
+
+/// Grid / тогтмол өндөрт карт багтахгүй үед доош гүйлгэнэ.
+class _BoundedCardColumn extends StatelessWidget {
+  const _BoundedCardColumn({
+    required this.image,
+    required this.body,
+  });
+
+  final Widget image;
+  final Widget body;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!constraints.maxHeight.isFinite) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [image, body],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            image,
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                child: body,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -371,15 +407,13 @@ class _ScheduledCard extends StatelessWidget {
             border: Border.all(color: const Color(0xFF60A5FA).withValues(alpha: 0.5)),
             borderRadius: BorderRadius.circular(AppTheme.radius),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _ActiveImage(auction: auction),
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+          child: _BoundedCardColumn(
+            image: _ActiveImage(auction: auction),
+            body: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                     Text(
                       auction.title,
                       maxLines: 2,
@@ -440,10 +474,9 @@ class _ScheduledCard extends StatelessWidget {
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
-      ),
     );
   }
 }
@@ -472,65 +505,63 @@ class _FinishedCard extends StatelessWidget {
             border: Border.all(color: AppTheme.border),
             borderRadius: BorderRadius.circular(AppTheme.radius),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              AspectRatio(
-                aspectRatio: 16 / 10,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    if (auction.image != null && auction.image!.isNotEmpty)
-                      ColorFiltered(
-                        colorFilter: const ColorFilter.mode(
-                          Colors.black54,
-                          BlendMode.darken,
-                        ),
-                        child: Image.network(
-                          auction.image!,
-                          fit: BoxFit.cover,
-                          cacheWidth: 400,
-                          errorBuilder: (_, __, ___) => const _Placeholder(),
-                        ),
-                      )
-                    else
-                      const _Placeholder(),
-                    Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.emoji_events,
-                            color: AppTheme.primary,
-                            size: 28,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'ЯЛАГЧ ТОДОРХОЙЛОГДЛОО',
-                            style: AppTheme.bodyStyle.copyWith(
-                              fontSize: 10,
-                              letterSpacing: 1,
-                              color: AppTheme.primary,
-                            ),
-                          ),
-                          if (auction.winnerName != null)
-                            Text(
-                              auction.winnerName!,
-                              style: AppTheme.headingStyle.copyWith(
-                                fontSize: 14,
-                              ),
-                            ),
-                        ],
+          child: _BoundedCardColumn(
+            image: AspectRatio(
+              aspectRatio: 16 / 10,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (auction.image != null && auction.image!.isNotEmpty)
+                    ColorFiltered(
+                      colorFilter: const ColorFilter.mode(
+                        Colors.black54,
+                        BlendMode.darken,
                       ),
+                      child: Image.network(
+                        auction.image!,
+                        fit: BoxFit.cover,
+                        cacheWidth: 400,
+                        errorBuilder: (_, __, ___) => const _Placeholder(),
+                      ),
+                    )
+                  else
+                    const _Placeholder(),
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.emoji_events,
+                          color: AppTheme.primary,
+                          size: 28,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'ЯЛАГЧ ТОДОРХОЙЛОГДЛОО',
+                          style: AppTheme.bodyStyle.copyWith(
+                            fontSize: 10,
+                            letterSpacing: 1,
+                            color: AppTheme.primary,
+                          ),
+                        ),
+                        if (auction.winnerName != null)
+                          Text(
+                            auction.winnerName!,
+                            style: AppTheme.headingStyle.copyWith(
+                              fontSize: 14,
+                            ),
+                          ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            ),
+            body: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                     Text(
                       auction.title,
                       style: AppTheme.headingStyle.copyWith(fontSize: 13),
@@ -606,10 +637,9 @@ class _FinishedCard extends StatelessWidget {
                   ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
-      ),
     );
   }
 }
