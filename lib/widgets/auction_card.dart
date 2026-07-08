@@ -75,11 +75,13 @@ class AuctionCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppTheme.radius),
           ),
           child: _BoundedCardColumn(
-            image: _ActiveImage(auction: auction),
+            compact: !expanded,
+            image: _ActiveImage(auction: auction, compact: !expanded),
             body: Padding(
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                     Text(
                       auction.title,
@@ -300,16 +302,21 @@ class _BoundedCardColumn extends StatelessWidget {
   const _BoundedCardColumn({
     required this.image,
     required this.body,
+    this.compact = false,
   });
 
   final Widget image;
   final Widget body;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (!constraints.maxHeight.isFinite) {
+        final bounded = constraints.hasBoundedHeight &&
+            constraints.maxHeight.isFinite;
+
+        if (!bounded) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
@@ -317,17 +324,20 @@ class _BoundedCardColumn extends StatelessWidget {
           );
         }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            image,
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                child: body,
+        return SizedBox(
+          height: constraints.maxHeight,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              image,
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: body,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -335,14 +345,15 @@ class _BoundedCardColumn extends StatelessWidget {
 }
 
 class _ActiveImage extends StatelessWidget {
-  const _ActiveImage({required this.auction});
+  const _ActiveImage({required this.auction, this.compact = false});
 
   final AuctionModel auction;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
-      aspectRatio: 16 / 10,
+      aspectRatio: compact ? 2.2 : 16 / 10,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -408,11 +419,13 @@ class _ScheduledCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppTheme.radius),
           ),
           child: _BoundedCardColumn(
-            image: _ActiveImage(auction: auction),
+            compact: true,
+            image: _ActiveImage(auction: auction, compact: true),
             body: Padding(
               padding: const EdgeInsets.all(10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                     Text(
                       auction.title,
@@ -506,8 +519,9 @@ class _FinishedCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppTheme.radius),
           ),
           child: _BoundedCardColumn(
+            compact: true,
             image: AspectRatio(
-              aspectRatio: 16 / 10,
+              aspectRatio: 2.2,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -561,6 +575,7 @@ class _FinishedCard extends StatelessWidget {
               padding: const EdgeInsets.all(10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                     Text(
                       auction.title,
