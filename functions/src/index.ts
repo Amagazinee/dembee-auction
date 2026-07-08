@@ -10,9 +10,11 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
 import { logger } from "firebase-functions";
 import {
+  activateScheduledAuctionById,
   nextCheckTime,
   processAuctionById,
   sweepExpiredAuctions,
+  sweepPendingAuctions,
   AuctionData,
 } from "./auction_lifecycle";
 
@@ -35,9 +37,15 @@ export const processAuctionTask = onTaskDispatched(
       return;
     }
 
-    const result = await processAuctionById(db, auctionId);
+    const result = await activateScheduledAuctionById(db, auctionId);
     if (result.changed) {
-      logger.info(`Дуудлага ${auctionId}: ${result.action}`);
+      logger.info(`Дуудлага ${auctionId}: идэвхжүүлэгдлээ`);
+      return;
+    }
+
+    const lifecycleResult = await processAuctionById(db, auctionId);
+    if (lifecycleResult.changed) {
+      logger.info(`Дуудлага ${auctionId}: ${lifecycleResult.action}`);
     }
   },
 );
@@ -58,7 +66,7 @@ export const scheduleAuctionLifecycle = onDocumentWritten(
     }
 
     const data = after.data() as AuctionData;
-    if (data.status !== "active") {
+    if (data.status !== "active" && data.status !== "pending") {
       return;
     }
 
@@ -100,9 +108,13 @@ export const sweepAuctionLifecycle = onSchedule(
     timeZone: "Asia/Ulaanbaatar",
   },
   async () => {
-    const count = await sweepExpiredAuctions(db);
+    const pendingCount = await sweepPendingAuctions(db);
+    const expiredCount = await sweepExpiredAuctions(db);
+    const count = pendingCount + expiredCount;
     if (count > 0) {
-      logger.info(`Sweep: ${count} дуудлага боловсруулагдлаа`);
+      logger.info(
+        `Sweep: ${pendingCount} идэвхжүүлэгдсэн, ${expiredCount} lifecycle боловсруулагдлаа`,
+      );
     }
   },
 );

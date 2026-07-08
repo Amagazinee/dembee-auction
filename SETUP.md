@@ -147,26 +147,47 @@ firebase deploy --only firestore:rules,firestore:indexes,storage --project dembe
 ```
 Апп, санал өгөх, админ самбар, **зураг upload** ажиллана. Ялагч тодруулах: админ → Дуудлага tab → «Ялагч тодруулах» товч (Cloud Functions deploy хийхээс өмнө).
 
-#### Deploy (Blaze дээр)
+#### Blaze одоо идэвхжүүлэх (3 алхам)
+
+**Алхам 1 — Blaze сонгох**
+
+1. https://console.firebase.google.com/project/dembee-auction/usage/details
+2. **Upgrade** → **Blaze** → төлбөрийн карт
+3. (Зөвлөмж) Google Cloud → Billing → **$10/сар budget alert**
+
+**Алхам 2 — Firebase нэвтрэх**
 
 ```powershell
-cd C:\Users\user\dembee_app\functions
-npm install
-cd ..
-firebase deploy --only functions --project dembee-auction
+npx firebase-tools@14 login
 ```
 
-**Функцүүд** (`asia-southeast1` бүс):
+**Алхам 3 — Deploy**
+
+```powershell
+cd C:\Users\user\dembee-auction
+.\scripts\deploy-blaze.ps1
+```
+
+Эсвэл Linux/macOS: `./scripts/deploy-blaze.sh`
+
+#### Deploy (Blaze дээр) — гараар
+
+```powershell
+cd functions
+npm install
+npm run build
+cd ..
+npx firebase-tools@14 deploy --only functions,firestore:rules,firestore:indexes --project dembee-auction
+```
+
+**Функцүүд** (`asia-southeast1`):
 | Функц | Зориулалт |
 |-------|-----------|
-| `processAuctionTask` | Task queue — яг цагт дуудлага шалгана |
-| `scheduleAuctionLifecycle` | Санал/үе өөрчлөгдөхөд дараагийн шалгалт төлөвлөнө |
-| `sweepAuctionLifecycle` | Минут бүр нөөц sweep (task алдагдсан тохиолдолд) |
+| `processAuctionTask` | Төлөвлөсөн эхлэх + lifecycle шалгалт |
+| `scheduleAuctionLifecycle` | Дуудлага өөрчлөгдөхөд дараагийн шалгалт төлөвлөнө |
+| `sweepAuctionLifecycle` | Минут бүр: pending идэвхжүүлэх + lifecycle sweep |
 
-Deploy дараа шинэ index (`status` + `winCountdownEndsAt`) publish хийнэ:
-```powershell
-firebase deploy --only firestore:indexes --project dembee-auction
-```
+Deploy дараа index (`status`+`startsAt`, `status`+`winCountdownEndsAt`) publish хийнэ.
 
 ### 4.3 Firebase Storage (дуудлагын зураг)
 
