@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../core/auction_lifecycle.dart';
 import '../core/constants/app_constants.dart';
@@ -103,7 +104,8 @@ class AuctionService {
   String createAuctionId() => _auctions.doc().id;
 
   /// Админ — шинэ дуудлага үүсгэх (эхлэх цагтай)
-  Future<String> createAuction({
+  /// [notificationsSent] false бол дуудлага үүссэн ч мэдэгдэл илгээгдээгүй
+  Future<({String auctionId, bool notificationsSent})> createAuction({
     required String title,
     required String category,
     required String description,
@@ -119,7 +121,7 @@ class AuctionService {
 
     final ref = docId != null ? _auctions.doc(docId) : _auctions.doc();
     final now = DateTime.now();
-    final scheduled = startsAt.isAfter(now.add(const Duration(minutes: 1)));
+    final scheduled = startsAt.isAfter(now);
     final phaseConfig = AuctionPhases.forPhase(1);
 
     final data = <String, dynamic>{
@@ -139,10 +141,10 @@ class AuctionService {
       data[FirestoreFields.endsAt] =
           Timestamp.fromDate(startsAt.add(const Duration(days: 30)));
     } else {
-      final endsAt = now.add(const Duration(days: 30));
-      final winReset = now.add(phaseConfig.winCountdown);
+      final endsAt = startsAt.add(const Duration(days: 30));
+      final winReset = startsAt.add(phaseConfig.winCountdown);
       data[FirestoreFields.endsAt] = Timestamp.fromDate(endsAt);
-      data[FirestoreFields.phaseStartedAt] = FieldValue.serverTimestamp();
+      data[FirestoreFields.phaseStartedAt] = Timestamp.fromDate(startsAt);
       data[FirestoreFields.winCountdownEndsAt] = Timestamp.fromDate(winReset);
     }
 
@@ -158,15 +160,23 @@ class AuctionService {
 
     try {
       await ref.set(data);
+    } on FirebaseException catch (e) {
+      throw FirestoreException('Дуудлага нэмэхэд алдаа: ${e.message}');
+    }
+
+    var notificationsSent = true;
+    try {
       await _notificationService.notifyAllUsersNewAuction(
         auctionId: ref.id,
         title: title.trim(),
         startsAt: startsAt,
       );
-      return ref.id;
-    } on FirebaseException catch (e) {
-      throw FirestoreException('Дуудлага нэмэхэд алдаа: ${e.message}');
+    } catch (e) {
+      notificationsSent = false;
+      debugPrint('Мэдэгдэл илгээхэд алдаа: $e');
     }
+
+    return (auctionId: ref.id, notificationsSent: notificationsSent);
   }
 
   /// Төлөвлөсөн дуудлагыг эхлүүлэх
@@ -188,16 +198,15 @@ class AuctionService {
           return false;
         }
 
-        final now = DateTime.now();
         final phaseConfig = AuctionPhases.forPhase(1);
         transaction.update(ref, {
           FirestoreFields.status: AppConstants.statusActive,
-          FirestoreFields.phaseStartedAt: Timestamp.fromDate(now),
+          FirestoreFields.phaseStartedAt: Timestamp.fromDate(startsAt),
           FirestoreFields.winCountdownEndsAt: Timestamp.fromDate(
-            now.add(phaseConfig.winCountdown),
+            startsAt.add(phaseConfig.winCountdown),
           ),
           FirestoreFields.endsAt:
-              Timestamp.fromDate(now.add(const Duration(days: 30))),
+              Timestamp.fromDate(startsAt.add(const Duration(days: 30))),
           FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
         });
         return true;

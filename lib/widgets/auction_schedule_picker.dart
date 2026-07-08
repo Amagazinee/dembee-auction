@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../core/utils/formatters.dart';
 import '../theme/app_theme.dart';
 
-/// Дуудлага эхлэх цаг сонгох — сар, өдөр, цаг, минут
+/// Дуудлага эхлэх цаг сонгох — сар, өдөр, цаг, минут (2 оронтой)
 class AuctionSchedulePicker extends StatefulWidget {
   const AuctionSchedulePicker({
     super.key,
@@ -46,9 +46,8 @@ class _AuctionSchedulePickerState extends State<AuctionSchedulePicker> {
     _minute = dt.minute;
   }
 
-  int get _daysInMonth {
-    return DateTime(widget.value.year, _month + 1, 0).day;
-  }
+  int get _daysInMonth =>
+      DateTime(widget.value.year, _month + 1, 0).day;
 
   void _emit() {
     final day = _day.clamp(1, _daysInMonth);
@@ -107,6 +106,7 @@ class _AuctionSchedulePickerState extends State<AuctionSchedulePicker> {
           children: [
             Expanded(
               child: _ScheduleField(
+                key: ValueKey('month-$_month'),
                 label: 'Сар',
                 value: _month,
                 max: 12,
@@ -123,6 +123,7 @@ class _AuctionSchedulePickerState extends State<AuctionSchedulePicker> {
             const SizedBox(width: 8),
             Expanded(
               child: _ScheduleField(
+                key: ValueKey('day-$_day-$_month'),
                 label: 'Өдөр',
                 value: _day,
                 max: _daysInMonth,
@@ -136,6 +137,7 @@ class _AuctionSchedulePickerState extends State<AuctionSchedulePicker> {
             const SizedBox(width: 8),
             Expanded(
               child: _ScheduleField(
+                key: ValueKey('hour-$_hour'),
                 label: 'Цаг',
                 value: _hour,
                 max: 23,
@@ -149,6 +151,7 @@ class _AuctionSchedulePickerState extends State<AuctionSchedulePicker> {
             const SizedBox(width: 8),
             Expanded(
               child: _ScheduleField(
+                key: ValueKey('minute-$_minute'),
                 label: 'Мин',
                 value: _minute,
                 max: 59,
@@ -172,8 +175,9 @@ class _AuctionSchedulePickerState extends State<AuctionSchedulePicker> {
   }
 }
 
-class _ScheduleField extends StatelessWidget {
+class _ScheduleField extends StatefulWidget {
   const _ScheduleField({
+    super.key,
     required this.label,
     required this.value,
     required this.min,
@@ -188,11 +192,63 @@ class _ScheduleField extends StatelessWidget {
   final ValueChanged<int> onChanged;
 
   @override
+  State<_ScheduleField> createState() => _ScheduleFieldState();
+}
+
+class _ScheduleFieldState extends State<_ScheduleField> {
+  late final TextEditingController _controller;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _format(widget.value));
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void didUpdateWidget(_ScheduleField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.value != widget.value && !_focusNode.hasFocus) {
+      _controller.text = _format(widget.value);
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _format(int n) => n.toString().padLeft(2, '0');
+
+  void _onFocusChange() {
+    if (!_focusNode.hasFocus) {
+      _commitValue(_controller.text);
+    }
+  }
+
+  void _commitValue(String text) {
+    final parsed = int.tryParse(text);
+    if (parsed == null) {
+      _controller.text = _format(widget.value);
+      return;
+    }
+    final clamped = parsed.clamp(widget.min, widget.max);
+    _controller.text = _format(clamped);
+    if (clamped != widget.value) {
+      widget.onChanged(clamped);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Text(
-          label,
+          widget.label,
           style: AppTheme.bodyStyle.copyWith(
             fontSize: 11,
             color: AppTheme.mutedForeground,
@@ -200,19 +256,28 @@ class _ScheduleField extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         TextFormField(
-          key: ValueKey('$label-$value'),
-          initialValue: value.toString(),
+          controller: _controller,
+          focusNode: _focusNode,
           keyboardType: TextInputType.number,
           textAlign: TextAlign.center,
+          maxLength: 2,
+          buildCounter: (_, {required currentLength, required isFocused, maxLength}) =>
+              null,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           style: AppTheme.monoStyle.copyWith(
             fontSize: 16,
             color: AppTheme.foreground,
+            letterSpacing: 1,
           ),
           decoration: InputDecoration(
             filled: true,
             fillColor: AppTheme.inputBackground,
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            hintText: '00',
+            hintStyle: AppTheme.monoStyle.copyWith(
+              fontSize: 16,
+              color: AppTheme.mutedForeground.withValues(alpha: 0.5),
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
               borderSide: const BorderSide(color: AppTheme.border),
@@ -227,10 +292,16 @@ class _ScheduleField extends StatelessWidget {
             ),
           ),
           onChanged: (text) {
+            if (text.isEmpty) return;
             final parsed = int.tryParse(text);
             if (parsed == null) return;
-            onChanged(parsed.clamp(min, max));
+            if (text.length == 2 || parsed > widget.max ~/ 10) {
+              final clamped = parsed.clamp(widget.min, widget.max);
+              widget.onChanged(clamped);
+            }
           },
+          onEditingComplete: () => _commitValue(_controller.text),
+          onFieldSubmitted: _commitValue,
         ),
       ],
     );
