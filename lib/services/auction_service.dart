@@ -119,7 +119,7 @@ class AuctionService {
 
     final ref = docId != null ? _auctions.doc(docId) : _auctions.doc();
     final now = DateTime.now();
-    final scheduled = startsAt.isAfter(now.add(const Duration(minutes: 1)));
+    final scheduled = startsAt.isAfter(now);
     final phaseConfig = AuctionPhases.forPhase(1);
 
     final data = <String, dynamic>{
@@ -139,10 +139,10 @@ class AuctionService {
       data[FirestoreFields.endsAt] =
           Timestamp.fromDate(startsAt.add(const Duration(days: 30)));
     } else {
-      final endsAt = now.add(const Duration(days: 30));
-      final winReset = now.add(phaseConfig.winCountdown);
+      final endsAt = startsAt.add(const Duration(days: 30));
+      final winReset = startsAt.add(phaseConfig.winCountdown);
       data[FirestoreFields.endsAt] = Timestamp.fromDate(endsAt);
-      data[FirestoreFields.phaseStartedAt] = FieldValue.serverTimestamp();
+      data[FirestoreFields.phaseStartedAt] = Timestamp.fromDate(startsAt);
       data[FirestoreFields.winCountdownEndsAt] = Timestamp.fromDate(winReset);
     }
 
@@ -188,16 +188,15 @@ class AuctionService {
           return false;
         }
 
-        final now = DateTime.now();
         final phaseConfig = AuctionPhases.forPhase(1);
         transaction.update(ref, {
           FirestoreFields.status: AppConstants.statusActive,
-          FirestoreFields.phaseStartedAt: Timestamp.fromDate(now),
+          FirestoreFields.phaseStartedAt: Timestamp.fromDate(startsAt),
           FirestoreFields.winCountdownEndsAt: Timestamp.fromDate(
-            now.add(phaseConfig.winCountdown),
+            startsAt.add(phaseConfig.winCountdown),
           ),
           FirestoreFields.endsAt:
-              Timestamp.fromDate(now.add(const Duration(days: 30))),
+              Timestamp.fromDate(startsAt.add(const Duration(days: 30))),
           FirestoreFields.updatedAt: FieldValue.serverTimestamp(),
         });
         return true;

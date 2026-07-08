@@ -3,6 +3,7 @@ import { phaseConfig, TOTAL_PHASES } from "./auction_phases";
 
 const STATUS_ACTIVE = "active";
 const STATUS_CLOSED = "closed";
+const STATUS_PENDING = "pending";
 
 export interface AuctionData {
   status?: string;
@@ -10,6 +11,7 @@ export interface AuctionData {
   phase?: number;
   phaseStartedAt?: admin.firestore.Timestamp;
   winCountdownEndsAt?: admin.firestore.Timestamp;
+  startsAt?: admin.firestore.Timestamp;
   lastBidUid?: string;
   lastBidder?: string;
   endsAt?: admin.firestore.Timestamp;
@@ -50,6 +52,12 @@ export function evaluateAuctionLifecycle(
     return { updates: null };
   }
 
+  const nowMs = now.toMillis();
+  const startsAtMs = toMillis(data.startsAt);
+  if (startsAtMs !== null && nowMs < startsAtMs) {
+    return { updates: null };
+  }
+
   const phase = Math.min(
     Math.max((data.phase as number) ?? 1, 1),
     TOTAL_PHASES,
@@ -57,7 +65,6 @@ export function evaluateAuctionLifecycle(
   const config = phaseConfig(phase);
   const winEndsMs = toMillis(data.winCountdownEndsAt);
   const phaseStartMs = toMillis(data.phaseStartedAt);
-  const nowMs = now.toMillis();
 
   if (winEndsMs !== null && nowMs >= winEndsMs) {
     if (data.lastBidUid) {
@@ -124,6 +131,49 @@ function buildPhaseAdvance(
   return { updates, action: "phase_advance" };
 }
 
+/** Төлөвлөсөн дуудлагыг эхлүүлэх (startsAt хүрсэн pending → active) */
+export async function activateScheduledAuctionById(
+  db: admin.firestore.Firestore,
+  auctionId: string,
+): Promise<LifecycleResult> {
+  const ref = db.collection("auctions").doc(auctionId);
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) {
+      return { changed: false };
+    }
+
+    const data = snap.data() as AuctionData;
+    if (data.status !== STATUS_PENDING) {
+      return { changed: false };
+    }
+
+    const startsAt = data.startsAt;
+    if (!startsAt) {
+      return { changed: false };
+    }
+
+    const now = admin.firestore.Timestamp.now();
+    if (now.toMillis() < startsAt.toMillis()) {
+      return { changed: false };
+    }
+
+    const firstPhase = phaseConfigFor(1);
+    tx.update(ref, {
+      status: STATUS_ACTIVE,
+      phaseStartedAt: startsAt,
+      winCountdownEndsAt: addSeconds(startsAt, firstPhase.winCountdownSeconds),
+      endsAt: admin.firestore.Timestamp.fromMillis(
+        startsAt.toMillis() + 30 * 24 * 60 * 60 * 1000,
+      ),
+      updatedAt: now,
+    });
+
+    return { changed: true, action: "phase_advance" };
+  });
+}
+
 /** Firestore transaction-оор нэг дуудлага боловсруулах */
 export async function processAuctionById(
   db: admin.firestore.Firestore,
@@ -138,6 +188,10 @@ export async function processAuctionById(
     }
 
     const data = snap.data() as AuctionData;
+    if (data.status === STATUS_PENDING) {
+      return { changed: false };
+    }
+
     const now = admin.firestore.Timestamp.now();
     const { updates, action } = evaluateAuctionLifecycle(data, now);
 
@@ -148,6 +202,12 @@ export async function processAuctionById(
     tx.update(ref, updates);
     return { changed: true, action };
   });
+}
+
+function phaseConfigFor(phase: number) {
+  return phaseConfig(
+    Math.min(Math.max(phase, 1), TOTAL_PHASES),
+  );
 }
 
 /** Идэвхтэй, хугацаа нь дууссан дуудлагуудыг sweep хийх */
@@ -206,8 +266,38 @@ export async function sweepExpiredAuctions(
   return processed;
 }
 
+/** Төлөвлөсөн цаг нь болсон pending дуудлагуудыг идэвхжүүлэх */
+export async function sweepPendingAuctions(
+  db: admin.firestore.Firestore,
+  limit = 50,
+): Promise<number> {
+  const now = admin.firestore.Timestamp.now();
+
+  const pendingSnap = await db
+    .collection("auctions")
+    .where("status", "==", STATUS_PENDING)
+    .where("startsAt", "<=", now)
+    .limit(limit)
+    .get();
+
+  let processed = 0;
+  for (const doc of pendingSnap.docs) {
+    const result = await activateScheduledAuctionById(db, doc.id);
+    if (result.changed) {
+      processed += 1;
+    }
+  }
+
+  return processed;
+}
+
 /** Дараагийн шалгах цагийг тооцоолох (Cloud Tasks schedule) */
 export function nextCheckTime(data: AuctionData): Date | null {
+  if (data.status === STATUS_PENDING) {
+    const startsMs = toMillis(data.startsAt);
+    return startsMs !== null ? new Date(startsMs) : null;
+  }
+
   if (data.status !== STATUS_ACTIVE) {
     return null;
   }

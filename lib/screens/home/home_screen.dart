@@ -129,14 +129,13 @@ class _HomeScreenState extends State<HomeScreen> {
               }
 
               final auctions = auctionSnap.data ?? [];
-              final active = auctions
-                  .where((a) => a.isActive && !a.hasEnded)
-                  .toList();
+              final now = DateTime.now();
+              final active = auctions.where((a) => a.isOngoing).toList();
               final scheduled =
-                  auctions.where((a) => a.isPending).toList();
+                  auctions.where((a) => a.isScheduled(now)).toList();
               final displayAuctions = [
                 ...scheduled,
-                ...auctions.where((a) => !a.isPending),
+                ...auctions.where((a) => !a.isScheduled(now)),
               ];
               final totalBids =
                   auctions.fold<int>(0, (s, a) => s + a.totalBids);
