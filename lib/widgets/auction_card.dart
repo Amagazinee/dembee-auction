@@ -242,7 +242,6 @@ class AuctionCard extends StatelessWidget {
                     const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
-                      height: expanded ? 44 : 36,
                       child: ElevatedButton.icon(
                         onPressed: expanded
                             ? (_canQuickBid(now) ? onQuickBid : null)
@@ -269,12 +268,20 @@ class AuctionCard extends StatelessWidget {
                           style: AppTheme.bodyStyle.copyWith(
                             fontSize: expanded ? 13 : 11,
                             fontWeight: FontWeight.w700,
+                            height: 1.1,
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primary,
                           foregroundColor: AppTheme.primaryForeground,
                           disabledBackgroundColor: AppTheme.muted,
+                          minimumSize: Size(double.infinity, expanded ? 44 : 40),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: expanded ? 12 : 10,
+                          ),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
                         ),
                       ),
                     ),
@@ -333,6 +340,7 @@ class _BoundedCardColumn extends StatelessWidget {
               Expanded(
                 child: SingleChildScrollView(
                   physics: const ClampingScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 4),
                   child: body,
                 ),
               ),
