@@ -29,6 +29,42 @@ service cloud.firestore {
       return delta in [10, 20, 40, 60, 100, 200];
     }
 
+    function isNotBanned(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.get('banned', false) != true;
+    }
+
+    function isAdminUserMaintenance() {
+      return isAdmin()
+        && resource.data.get('role', 'user') != 'admin'
+        && (
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bidBalance'])
+            && request.resource.data.bidBalance is int
+            && request.resource.data.bidBalance >= 0
+          )
+          ||
+          (
+            request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['banned', 'bannedAt', 'bannedReason'])
+            && request.resource.data.banned is bool
+          )
+          ||
+          (
+            request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['banned', 'bannedAt'])
+            && request.resource.data.banned is bool
+          )
+        );
+    }
+
+    function isPurchaseRefund() {
+      return isAdmin()
+        && resource.data.status == 'completed'
+        && request.resource.data.status == 'refunded'
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['status', 'refundedAt']);
+    }
+
     function isLifecycleWinnerUpdate() {
       return resource.data.status == 'active'
         && request.resource.data.status == 'closed'
@@ -88,7 +124,8 @@ service cloud.firestore {
                 || request.resource.data.bidBalance == 0)
           )
         );
-      allow update: if isOwner(userId) && (
+      allow update: if isAdminUserMaintenance()
+        || (isOwner(userId) && (
         (
           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'createdAt'])
         )
@@ -111,6 +148,7 @@ service cloud.firestore {
           && isValidPackageIncrement(
             request.resource.data.bidBalance - resource.data.bidBalance
           )
+        )
         )
       );
       allow delete: if isOwner(userId);
@@ -151,6 +189,7 @@ service cloud.firestore {
               + request.resource.data.lastBidAmount
           && isValidBidIncrement(request.resource.data.lastBidAmount)
           && request.resource.data.lastBidUid == request.auth.uid
+          && isNotBanned(request.auth.uid)
           && request.resource.data.totalBids
               == resource.data.get('totalBids', 0) + 1
           && request.resource.data.phase == resource.data.get('phase', 1)
@@ -179,8 +218,10 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.userUid == request.auth.uid
         && request.resource.data.paymentMethod == 'test'
-        && request.resource.data.status == 'completed';
-      allow update, delete: if false;
+        && request.resource.data.status == 'completed'
+        && isNotBanned(request.auth.uid);
+      allow update: if isPurchaseRefund();
+      allow delete: if false;
     }
 
     // --- notifications ---

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../../core/errors/app_exception.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/user_model.dart';
 import '../../services/credits_service.dart';
@@ -18,6 +20,7 @@ class AdminUsersTab extends StatefulWidget {
 
 class _AdminUsersTabState extends State<AdminUsersTab> {
   final _searchController = TextEditingController();
+  String? _busyUserId;
 
   @override
   void dispose() {
@@ -41,6 +44,190 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       }
       return false;
     }).toList();
+  }
+
+  Future<void> _runUserAction(
+    String userId,
+    Future<void> Function() action,
+  ) async {
+    setState(() => _busyUserId = userId);
+    try {
+      await action();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Амжилттай хадгаллаа'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } on AppException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppTheme.destructive,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busyUserId = null);
+    }
+  }
+
+  Future<void> _showAdjustCreditsDialog(UserModel user) async {
+    final controller = TextEditingController(text: '${user.bidBalance}');
+    final result = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.card,
+        title: Text(
+          'Санал засах',
+          style: AppTheme.headingStyle.copyWith(fontSize: 18),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              user.name.isNotEmpty ? user.name : user.email,
+              style: AppTheme.bodyStyle.copyWith(
+                color: AppTheme.mutedForeground,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                labelText: 'Шинэ үлдэгдэл',
+                suffixText: 'санал',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Болих'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final value = int.tryParse(controller.text.trim());
+              if (value == null) return;
+              Navigator.pop(context, value);
+            },
+            child: const Text('Хадгалах'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    if (result == null || !mounted) return;
+    await _runUserAction(
+      user.uid,
+      () => widget.creditsService.adminAdjustBidBalance(
+        userUid: user.uid,
+        newBalance: result,
+      ),
+    );
+  }
+
+  Future<void> _showBanDialog(UserModel user) async {
+    final reasonController = TextEditingController();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.card,
+        title: Text(
+          'Хэрэглэгч хориглох',
+          style: AppTheme.headingStyle.copyWith(fontSize: 18),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              user.name.isNotEmpty ? user.name : user.email,
+              style: AppTheme.bodyStyle.copyWith(
+                color: AppTheme.mutedForeground,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonController,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Шалтгаан (сонголттой)',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Болих'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.destructive,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Хориглох'),
+          ),
+        ],
+      ),
+    );
+    final reason = reasonController.text;
+    reasonController.dispose();
+
+    if (confirmed != true || !mounted) return;
+    await _runUserAction(
+      user.uid,
+      () => widget.creditsService.adminSetUserBanned(
+        userUid: user.uid,
+        banned: true,
+        reason: reason,
+      ),
+    );
+  }
+
+  Future<void> _unbanUser(UserModel user) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.card,
+        title: const Text('Хориг арилгах уу?'),
+        content: Text(
+          user.name.isNotEmpty ? user.name : user.email,
+          style: AppTheme.bodyStyle.copyWith(color: AppTheme.mutedForeground),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Болих'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Арилгах'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+    await _runUserAction(
+      user.uid,
+      () => widget.creditsService.adminSetUserBanned(
+        userUid: user.uid,
+        banned: false,
+      ),
+    );
   }
 
   @override
@@ -69,6 +256,7 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         final q = _searchController.text.trim().toLowerCase();
 
         final adminCount = allUsers.where((u) => u.isAdmin).length;
+        final bannedCount = allUsers.where((u) => u.isBanned).length;
         final totalBids =
             allUsers.fold<int>(0, (sum, u) => sum + u.bidBalance);
 
@@ -89,9 +277,9 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: _SummaryChip(
-                      label: 'Админ',
-                      value: '$adminCount',
-                      color: AppTheme.primary,
+                      label: 'Хориглогдсон',
+                      value: '$bannedCount',
+                      color: AppTheme.destructive,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -105,6 +293,17 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                 ],
               ),
             ),
+            if (adminCount > 0)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Text(
+                  'Админ: $adminCount',
+                  style: AppTheme.bodyStyle.copyWith(
+                    fontSize: 11,
+                    color: AppTheme.mutedForeground,
+                  ),
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: TextField(
@@ -168,7 +367,13 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       itemCount: users.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 8),
-                      itemBuilder: (context, i) => _UserCard(user: users[i]),
+                      itemBuilder: (context, i) => _UserCard(
+                        user: users[i],
+                        busy: _busyUserId == users[i].uid,
+                        onAdjustCredits: () => _showAdjustCreditsDialog(users[i]),
+                        onBan: () => _showBanDialog(users[i]),
+                        onUnban: () => _unbanUser(users[i]),
+                      ),
                     ),
             ),
           ],
@@ -226,9 +431,19 @@ class _SummaryChip extends StatelessWidget {
 }
 
 class _UserCard extends StatelessWidget {
-  const _UserCard({required this.user});
+  const _UserCard({
+    required this.user,
+    required this.busy,
+    required this.onAdjustCredits,
+    required this.onBan,
+    required this.onUnban,
+  });
 
   final UserModel user;
+  final bool busy;
+  final VoidCallback onAdjustCredits;
+  final VoidCallback onBan;
+  final VoidCallback onUnban;
 
   @override
   Widget build(BuildContext context) {
@@ -240,95 +455,176 @@ class _UserCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.card,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(
+          color: user.isBanned
+              ? AppTheme.destructive.withValues(alpha: 0.5)
+              : AppTheme.border,
+        ),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: AppTheme.primary.withValues(alpha: 0.25),
-            child: Text(
-              initial,
-              style: AppTheme.headingStyle.copyWith(
-                fontSize: 16,
-                color: AppTheme.primary,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: AppTheme.primary.withValues(alpha: 0.25),
+                child: Text(
+                  initial,
+                  style: AppTheme.headingStyle.copyWith(
+                    fontSize: 16,
+                    color: AppTheme.primary,
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        user.name.isNotEmpty ? user.name : 'Нэргүй',
-                        style: AppTheme.bodyStyle.copyWith(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            user.name.isNotEmpty ? user.name : 'Нэргүй',
+                            style: AppTheme.bodyStyle.copyWith(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
                         ),
-                      ),
+                        if (user.isAdmin)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppTheme.primary),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'АДМИН',
+                              style: AppTheme.monoStyle.copyWith(fontSize: 9),
+                            ),
+                          ),
+                        if (user.isBanned)
+                          Container(
+                            margin: const EdgeInsets.only(left: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.destructive.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: AppTheme.destructive.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Text(
+                              'ХОРИГЛОСОН',
+                              style: AppTheme.monoStyle.copyWith(
+                                fontSize: 9,
+                                color: AppTheme.destructive,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    if (user.isAdmin)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppTheme.primary),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'АДМИН',
-                          style: AppTheme.monoStyle.copyWith(fontSize: 9),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  user.email,
-                  style: AppTheme.bodyStyle.copyWith(
-                    fontSize: 12,
-                    color: AppTheme.mutedForeground,
-                  ),
-                ),
-                if (user.phone.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    user.phone,
-                    style: AppTheme.bodyStyle.copyWith(
-                      fontSize: 12,
-                      color: AppTheme.mutedForeground,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.bolt, size: 14, color: AppTheme.primary),
-                    const SizedBox(width: 4),
+                    const SizedBox(height: 4),
                     Text(
-                      '${user.bidBalance} санал',
-                      style: AppTheme.monoStyle.copyWith(fontSize: 12),
-                    ),
-                    const Spacer(),
-                    Text(
-                      'Бүртгэлтэй: ${formatDate(user.createdAt)}',
+                      user.email,
                       style: AppTheme.bodyStyle.copyWith(
-                        fontSize: 10,
+                        fontSize: 12,
                         color: AppTheme.mutedForeground,
                       ),
                     ),
+                    if (user.phone.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        user.phone,
+                        style: AppTheme.bodyStyle.copyWith(
+                          fontSize: 12,
+                          color: AppTheme.mutedForeground,
+                        ),
+                      ),
+                    ],
+                    if (user.isBanned &&
+                        user.bannedReason != null &&
+                        user.bannedReason!.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'Шалтгаан: ${user.bannedReason}',
+                        style: AppTheme.bodyStyle.copyWith(
+                          fontSize: 11,
+                          color: AppTheme.destructive,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.bolt, size: 14, color: AppTheme.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${user.bidBalance} санал',
+                          style: AppTheme.monoStyle.copyWith(fontSize: 12),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'Бүртгэлтэй: ${formatDate(user.createdAt)}',
+                          style: AppTheme.bodyStyle.copyWith(
+                            fontSize: 10,
+                            color: AppTheme.mutedForeground,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
+              ),
+            ],
+          ),
+          if (!user.isAdmin) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: busy ? null : onAdjustCredits,
+                  icon: busy
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.edit, size: 16),
+                  label: const Text('Санал засах'),
+                ),
+                if (user.isBanned)
+                  OutlinedButton.icon(
+                    onPressed: busy ? null : onUnban,
+                    icon: const Icon(Icons.lock_open, size: 16),
+                    label: const Text('Хориг арилгах'),
+                  )
+                else
+                  OutlinedButton.icon(
+                    onPressed: busy ? null : onBan,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.destructive,
+                      side: BorderSide(
+                        color: AppTheme.destructive.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    icon: const Icon(Icons.block, size: 16),
+                    label: const Text('Хориглох'),
+                  ),
               ],
             ),
-          ),
+          ],
         ],
       ),
     );

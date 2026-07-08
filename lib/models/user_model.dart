@@ -11,6 +11,9 @@ class UserModel {
     required this.createdAt,
     this.role = 'user',
     this.bidBalance = 0,
+    this.banned = false,
+    this.bannedAt,
+    this.bannedReason,
   });
 
   final String uid;
@@ -20,9 +23,13 @@ class UserModel {
   final DateTime createdAt;
   final String role;
   final int bidBalance;
+  final bool banned;
+  final DateTime? bannedAt;
+  final String? bannedReason;
 
   bool get isAdmin => role == 'admin';
   bool get hasCredits => bidBalance > 0;
+  bool get isBanned => banned;
 
   factory UserModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
@@ -34,6 +41,9 @@ class UserModel {
       createdAt: _parseTimestamp(data[FirestoreFields.createdAt]),
       role: data[FirestoreFields.role] as String? ?? 'user',
       bidBalance: (data[FirestoreFields.bidBalance] as num?)?.toInt() ?? 0,
+      banned: data[FirestoreFields.banned] as bool? ?? false,
+      bannedAt: _parseOptionalTimestamp(data[FirestoreFields.bannedAt]),
+      bannedReason: data[FirestoreFields.bannedReason] as String?,
     );
   }
 
@@ -45,6 +55,10 @@ class UserModel {
       FirestoreFields.createdAt: Timestamp.fromDate(createdAt),
       FirestoreFields.role: role,
       FirestoreFields.bidBalance: bidBalance,
+      FirestoreFields.banned: banned,
+      if (bannedAt != null)
+        FirestoreFields.bannedAt: Timestamp.fromDate(bannedAt!),
+      if (bannedReason != null) FirestoreFields.bannedReason: bannedReason,
     };
   }
 
@@ -60,6 +74,9 @@ class UserModel {
       createdAt: createdAt,
       role: role,
       bidBalance: bidBalance,
+      banned: banned,
+      bannedAt: bannedAt,
+      bannedReason: bannedReason,
     );
   }
 
@@ -67,5 +84,11 @@ class UserModel {
     if (value is Timestamp) return value.toDate();
     if (value is DateTime) return value;
     return DateTime.now();
+  }
+
+  static DateTime? _parseOptionalTimestamp(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return null;
   }
 }
