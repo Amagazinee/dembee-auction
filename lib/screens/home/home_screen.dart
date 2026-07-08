@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/auction_filter.dart';
 import '../../core/errors/app_exception.dart';
 import '../../models/auction_model.dart';
 import '../../models/bid_history_model.dart';
@@ -9,6 +10,7 @@ import '../../services/auction_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/credits_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/auction_search_bar.dart';
 import '../../widgets/auction_card.dart';
 import '../../widgets/auction_lifecycle_runner.dart';
 import '../../widgets/dembee_app_bar.dart';
@@ -31,7 +33,16 @@ class _HomeScreenState extends State<HomeScreen> {
   final _auctionService = AuctionService();
   final _authService = AuthService();
   final _creditsService = CreditsService();
+  final _searchController = TextEditingController();
   String? _biddingAuctionId;
+  AuctionStatusFilter _statusFilter = AuctionStatusFilter.all;
+  String? _categoryFilter;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   Future<void> _quickBid(AuctionModel auction) async {
     final user = _authService.currentUser;
@@ -116,7 +127,41 @@ class _HomeScreenState extends State<HomeScreen> {
             showAddAuction: isAdmin,
             onAddAuction: () => context.push('/admin/add-auction'),
           ),
-          body: StreamBuilder<List<AuctionModel>>(
+          body: Column(
+            children: [
+              if (user?.isBanned == true)
+                Material(
+                  color: AppTheme.destructive.withValues(alpha: 0.15),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.block,
+                          color: AppTheme.destructive,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            user!.bannedReason?.isNotEmpty == true
+                                ? 'Таны бүртгэл хориглогдсон: ${user.bannedReason}'
+                                : 'Таны бүртгэл түр хориглогдсон. support@dembee.mn',
+                            style: AppTheme.bodyStyle.copyWith(
+                              fontSize: 12,
+                              color: AppTheme.destructive,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              Expanded(
+                child: StreamBuilder<List<AuctionModel>>(
             stream: _auctionService.watchAuctions(),
             builder: (context, auctionSnap) {
               if (auctionSnap.connectionState == ConnectionState.waiting) {
@@ -130,12 +175,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
               final auctions = auctionSnap.data ?? [];
               final now = DateTime.now();
+              final filter = AuctionFilter(
+                query: _searchController.text,
+                status: _statusFilter,
+                category: _categoryFilter,
+              );
+              final filteredAuctions = filter.apply(auctions, now);
               final active = auctions.where((a) => a.isOngoing).toList();
-              final scheduled =
-                  auctions.where((a) => a.isScheduled(now)).toList();
               final displayAuctions = [
-                ...scheduled,
-                ...auctions.where((a) => !a.isScheduled(now)),
+                ...filteredAuctions.where((a) => a.isScheduled(now)),
+                ...filteredAuctions.where((a) => !a.isScheduled(now)),
               ];
               final totalBids =
                   auctions.fold<int>(0, (s, a) => s + a.totalBids);
@@ -173,6 +222,20 @@ class _HomeScreenState extends State<HomeScreen> {
                               final mainContent = CustomScrollView(
                                 slivers: [
                                   SliverToBoxAdapter(
+                                    child: AuctionSearchBar(
+                                      searchController: _searchController,
+                                      statusFilter: _statusFilter,
+                                      categoryFilter: _categoryFilter,
+                                      resultCount: filteredAuctions.length,
+                                      totalCount: auctions.length,
+                                      onSearchChanged: () => setState(() {}),
+                                      onStatusChanged: (value) =>
+                                          setState(() => _statusFilter = value),
+                                      onCategoryChanged: (value) =>
+                                          setState(() => _categoryFilter = value),
+                                    ),
+                                  ),
+                                  SliverToBoxAdapter(
                                     child: HomeStatsRow(
                                       activeCount: active.length,
                                       maxPhase: maxPhase,
@@ -184,11 +247,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                     child: PhaseLegend(),
                                   ),
                                   if (displayAuctions.isEmpty)
-                                    const SliverFillRemaining(
+                                    SliverFillRemaining(
                                       child: Center(
                                         child: Text(
-                                          'Одоогоор дуудлага байхгүй',
-                                          style: TextStyle(
+                                          filteredAuctions.length != auctions.length ||
+                                                  _searchController.text
+                                                      .trim()
+                                                      .isNotEmpty
+                                              ? 'Хайлтын үр дүн олдсонгүй'
+                                              : 'Одоогоор дуудлага байхгүй',
+                                          style: const TextStyle(
                                             color: AppTheme.mutedForeground,
                                           ),
                                         ),
@@ -320,6 +388,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               );
             },
+          ),
+        ),
+            ],
           ),
         );
       },

@@ -13,6 +13,7 @@ class PurchaseModel {
     required this.paymentMethod,
     required this.status,
     required this.createdAt,
+    this.refundedAt,
   });
 
   final String id;
@@ -23,6 +24,10 @@ class PurchaseModel {
   final String paymentMethod;
   final String status;
   final DateTime createdAt;
+  final DateTime? refundedAt;
+
+  bool get isCompleted => status == 'completed';
+  bool get isRefunded => status == 'refunded';
 
   factory PurchaseModel.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc,
@@ -37,6 +42,7 @@ class PurchaseModel {
       paymentMethod: data[FirestoreFields.paymentMethod] as String? ?? 'test',
       status: data[FirestoreFields.purchaseStatus] as String? ?? 'completed',
       createdAt: _parseTimestamp(data[FirestoreFields.createdAt]),
+      refundedAt: _parseOptionalTimestamp(data[FirestoreFields.refundedAt]),
     );
   }
 
@@ -56,9 +62,21 @@ class PurchaseModel {
         _ => paymentMethod,
       };
 
+  String get statusLabel => switch (status) {
+        'completed' => 'Амжилттай',
+        'refunded' => 'Буцаагдсан',
+        _ => status,
+      };
+
   static DateTime _parseTimestamp(dynamic value) {
     if (value is Timestamp) return value.toDate();
     if (value is DateTime) return value;
     return DateTime.now();
+  }
+
+  static DateTime? _parseOptionalTimestamp(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return null;
   }
 }

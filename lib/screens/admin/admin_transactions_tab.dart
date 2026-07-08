@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/errors/app_exception.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/purchase_model.dart';
 import '../../models/user_model.dart';
@@ -7,16 +8,81 @@ import '../../services/credits_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/loading_widget.dart';
 
-/// Админ самбар — бүх хэрэглэгчийн амжилттай санал багц худалдан авалт
-class AdminTransactionsTab extends StatelessWidget {
+/// Админ самбар — бүх хэрэглэгчийн санал багц худалдан авалт
+class AdminTransactionsTab extends StatefulWidget {
   const AdminTransactionsTab({super.key, required this.creditsService});
 
   final CreditsService creditsService;
 
   @override
+  State<AdminTransactionsTab> createState() => _AdminTransactionsTabState();
+}
+
+class _AdminTransactionsTabState extends State<AdminTransactionsTab> {
+  String? _busyPurchaseId;
+
+  Future<void> _refundPurchase(PurchaseModel purchase) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.card,
+        title: const Text('Буцаалт хийх уу?'),
+        content: Text(
+          '${purchase.bidCount} санал (${formatPrice(purchase.amount)}) буцаагдана. '
+          'Хэрэглэгчийн үлдсэн саналаас хасагдана.',
+          style: AppTheme.bodyStyle.copyWith(
+            color: AppTheme.mutedForeground,
+            fontSize: 13,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Болих'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.destructive,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Буцаах'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _busyPurchaseId = purchase.id);
+    try {
+      await widget.creditsService.adminRefundPurchase(purchase.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Буцаалт амжилттай'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } on AppException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppTheme.destructive,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busyPurchaseId = null);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<PurchaseModel>>(
-      stream: creditsService.watchAllCompletedPurchases(),
+      stream: widget.creditsService.watchAllPurchases(),
       builder: (context, purchaseSnap) {
         if (purchaseSnap.connectionState == ConnectionState.waiting) {
           return const LoadingWidget(message: 'Гүйлгээ ачаалж байна...');
@@ -35,15 +101,17 @@ class AdminTransactionsTab extends StatelessWidget {
         }
 
         final purchases = purchaseSnap.data ?? [];
+        final completed = purchases.where((p) => p.isCompleted).toList();
 
         return StreamBuilder<Map<String, UserModel>>(
-          stream: creditsService.watchAllUsers(),
+          stream: widget.creditsService.watchAllUsers(),
           builder: (context, userSnap) {
             final users = userSnap.data ?? {};
             final totalRevenue =
-                purchases.fold<int>(0, (sum, p) => sum + p.amount);
+                completed.fold<int>(0, (sum, p) => sum + p.amount);
             final totalBids =
-                purchases.fold<int>(0, (sum, p) => sum + p.bidCount);
+                completed.fold<int>(0, (sum, p) => sum + p.bidCount);
+            final refundedCount = purchases.where((p) => p.isRefunded).length;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -54,8 +122,8 @@ class AdminTransactionsTab extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _SummaryChip(
-                          label: 'Нийт гүйлгээ',
-                          value: '${purchases.length}',
+                          label: 'Амжилттай',
+                          value: '${completed.length}',
                           color: const Color(0xFF60A5FA),
                         ),
                       ),
@@ -70,20 +138,20 @@ class AdminTransactionsTab extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: _SummaryChip(
-                          label: 'Нэмсэн санал',
-                          value: formatNumber(totalBids),
-                          color: AppTheme.primary,
+                          label: 'Буцаагдсан',
+                          value: '$refundedCount',
+                          color: AppTheme.destructive,
                         ),
                       ),
                     ],
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                   child: Text(
-                    'Амжилттай санал багц худалдан авалтууд',
+                    'Нэмсэн санал: ${formatNumber(totalBids)}',
                     style: AppTheme.bodyStyle.copyWith(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: AppTheme.mutedForeground,
                     ),
                   ),
@@ -125,6 +193,10 @@ class AdminTransactionsTab extends StatelessWidget {
                             return _AdminPurchaseCard(
                               purchase: purchase,
                               user: user,
+                              busy: _busyPurchaseId == purchase.id,
+                              onRefund: purchase.isCompleted
+                                  ? () => _refundPurchase(purchase)
+                                  : null,
                             );
                           },
                         ),
@@ -189,10 +261,14 @@ class _AdminPurchaseCard extends StatelessWidget {
   const _AdminPurchaseCard({
     required this.purchase,
     this.user,
+    required this.busy,
+    this.onRefund,
   });
 
   final PurchaseModel purchase;
   final UserModel? user;
+  final bool busy;
+  final VoidCallback? onRefund;
 
   static const Color _priceGreen = Color(0xFF4ADE80);
 
@@ -204,6 +280,8 @@ class _AdminPurchaseCard extends StatelessWidget {
     final userContact = user?.email.isNotEmpty == true
         ? user!.email
         : user?.phone ?? purchase.userUid;
+    final statusColor =
+        purchase.isRefunded ? AppTheme.destructive : _priceGreen;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -257,15 +335,15 @@ class _AdminPurchaseCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: _priceGreen.withValues(alpha: 0.15),
+                  color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: _priceGreen.withValues(alpha: 0.4)),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.4)),
                 ),
                 child: Text(
-                  'Амжилттай',
+                  purchase.statusLabel,
                   style: AppTheme.monoStyle.copyWith(
                     fontSize: 9,
-                    color: _priceGreen,
+                    color: statusColor,
                   ),
                 ),
               ),
@@ -295,19 +373,57 @@ class _AdminPurchaseCard extends StatelessWidget {
                         color: AppTheme.mutedForeground,
                       ),
                     ),
+                    if (purchase.refundedAt != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Буцаасан: ${formatDateTime(purchase.refundedAt!)}',
+                        style: AppTheme.bodyStyle.copyWith(
+                          fontSize: 11,
+                          color: AppTheme.destructive,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
               Text(
-                '+${formatPrice(purchase.amount)}',
+                purchase.isRefunded
+                    ? formatPrice(purchase.amount)
+                    : '+${formatPrice(purchase.amount)}',
                 style: AppTheme.monoStyle.copyWith(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: _priceGreen,
+                  color: statusColor,
+                  decoration: purchase.isRefunded
+                      ? TextDecoration.lineThrough
+                      : null,
                 ),
               ),
             ],
           ),
+          if (onRefund != null) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: busy ? null : onRefund,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.destructive,
+                  side: BorderSide(
+                    color: AppTheme.destructive.withValues(alpha: 0.5),
+                  ),
+                ),
+                icon: busy
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.undo, size: 16),
+                label: const Text('Буцаалт'),
+              ),
+            ),
+          ],
         ],
       ),
     );

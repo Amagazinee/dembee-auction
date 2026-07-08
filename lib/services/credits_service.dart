@@ -48,16 +48,20 @@ class CreditsService {
         });
   }
 
-  /// Админ — бүх амжилттай санал багц худалдан авалт
-  Stream<List<PurchaseModel>> watchAllCompletedPurchases() {
+  /// Админ — бүх худалдан авалт (буцаагдсан орно)
+  Stream<List<PurchaseModel>> watchAllPurchases() {
     return _purchases.snapshots().map((s) {
-      final list = s.docs
-          .map(PurchaseModel.fromFirestore)
-          .where((p) => p.status == 'completed')
-          .toList();
+      final list = s.docs.map(PurchaseModel.fromFirestore).toList();
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;
     });
+  }
+
+  /// Админ — амжилттай санал багц худалдан авалт
+  Stream<List<PurchaseModel>> watchAllCompletedPurchases() {
+    return watchAllPurchases().map(
+      (list) => list.where((p) => p.isCompleted).toList(),
+    );
   }
 
   /// Админ — хэрэглэгчийн нэр/имэйл lookup
@@ -88,6 +92,16 @@ class CreditsService {
 
     try {
       await _firestore.runTransaction((transaction) async {
+        final userSnap = await transaction.get(userRef);
+        if (!userSnap.exists) {
+          throw const FirestoreException('Хэрэглэгчийн профайл олдсонгүй');
+        }
+        if (userSnap.data()?[FirestoreFields.banned] == true) {
+          throw const FirestoreException(
+            'Таны бүртгэл түр хориглогдсон. Дэмжлэгтэй холбогдоно уу.',
+          );
+        }
+
         transaction.set(purchaseRef, {
           FirestoreFields.userUid: uid,
           FirestoreFields.packageId: package.id,
@@ -104,6 +118,91 @@ class CreditsService {
       });
     } on FirebaseException catch (e) {
       throw FirestoreException('Багц худалдан авахад алдаа: ${e.message}');
+    }
+  }
+
+  /// Админ — хэрэглэгчийн саналын үлдэгдэл тохируулах
+  Future<void> adminAdjustBidBalance({
+    required String userUid,
+    required int newBalance,
+  }) async {
+    if (newBalance < 0) {
+      throw const FirestoreException('Саналын үлдэгдэл сөрөг байж болохгүй');
+    }
+
+    try {
+      await _users.doc(userUid).update({
+        FirestoreFields.bidBalance: newBalance,
+      });
+    } on FirebaseException catch (e) {
+      throw FirestoreException('Санал засахад алдаа: ${e.message}');
+    }
+  }
+
+  /// Админ — хэрэглэгчийг хориглох / сэргээх
+  Future<void> adminSetUserBanned({
+    required String userUid,
+    required bool banned,
+    String? reason,
+  }) async {
+    try {
+      await _users.doc(userUid).update({
+        FirestoreFields.banned: banned,
+        FirestoreFields.bannedAt:
+            banned ? FieldValue.serverTimestamp() : FieldValue.delete(),
+        FirestoreFields.bannedReason:
+            banned && reason != null && reason.trim().isNotEmpty
+                ? reason.trim()
+                : FieldValue.delete(),
+      });
+    } on FirebaseException catch (e) {
+      throw FirestoreException('Хориглоход алдаа: ${e.message}');
+    }
+  }
+
+  /// Админ — худалдан авалтыг буцаах (үлдсэн саналаас хасна)
+  Future<void> adminRefundPurchase(String purchaseId) async {
+    final purchaseRef = _purchases.doc(purchaseId);
+
+    try {
+      await _firestore.runTransaction((transaction) async {
+        final purchaseSnap = await transaction.get(purchaseRef);
+        if (!purchaseSnap.exists) {
+          throw const FirestoreException('Гүйлгээ олдсонгүй');
+        }
+
+        final purchaseData = purchaseSnap.data()!;
+        final status =
+            purchaseData[FirestoreFields.purchaseStatus] as String? ?? '';
+        if (status != 'completed') {
+          throw const FirestoreException('Зөвхөн амжилттай гүйлгээг буцаана');
+        }
+
+        final userUid = purchaseData[FirestoreFields.userUid] as String? ?? '';
+        final bidCount =
+            (purchaseData[FirestoreFields.bidCount] as num?)?.toInt() ?? 0;
+        final userRef = _users.doc(userUid);
+        final userSnap = await transaction.get(userRef);
+
+        if (userSnap.exists) {
+          final balance =
+              (userSnap.data()![FirestoreFields.bidBalance] as num?)?.toInt() ??
+                  0;
+          final deduct = bidCount > balance ? balance : bidCount;
+          if (deduct > 0) {
+            transaction.update(userRef, {
+              FirestoreFields.bidBalance: balance - deduct,
+            });
+          }
+        }
+
+        transaction.update(purchaseRef, {
+          FirestoreFields.purchaseStatus: 'refunded',
+          FirestoreFields.refundedAt: FieldValue.serverTimestamp(),
+        });
+      });
+    } on FirebaseException catch (e) {
+      throw FirestoreException('Буцаалт хийхэд алдаа: ${e.message}');
     }
   }
 }

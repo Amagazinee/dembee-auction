@@ -9,6 +9,9 @@ class FirestoreFields {
   static const String createdAt = 'createdAt';
   static const String role = 'role';
   static const String bidBalance = 'bidBalance';
+  static const String banned = 'banned';
+  static const String bannedAt = 'bannedAt';
+  static const String bannedReason = 'bannedReason';
 
   // auctions
   static const String title = 'title';
@@ -50,4 +53,5 @@ class FirestoreFields {
   static const String bidCount = 'bidCount';
   static const String paymentMethod = 'paymentMethod';
   static const String purchaseStatus = 'status';
+  static const String refundedAt = 'refundedAt';
 }

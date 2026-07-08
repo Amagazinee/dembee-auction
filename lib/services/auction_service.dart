@@ -235,6 +235,11 @@ class AuctionService {
 
         final balance =
             (userSnap.data()![FirestoreFields.bidBalance] as num?)?.toInt() ?? 0;
+        if (userSnap.data()?[FirestoreFields.banned] == true) {
+          throw const FirestoreException(
+            'Таны бүртгэл түр хориглогдсон. Дэмжлэгтэй холбогдоно уу.',
+          );
+        }
         if (balance < 1) {
           throw const FirestoreException(
             'Санал дууссан байна. Санал багц аваарай.',
