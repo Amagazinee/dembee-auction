@@ -10,7 +10,6 @@ class AuctionSearchBar extends StatelessWidget {
     required this.searchController,
     required this.statusFilter,
     required this.categoryFilter,
-    required this.onSearchChanged,
     required this.onStatusChanged,
     required this.onCategoryChanged,
     required this.resultCount,
@@ -20,7 +19,6 @@ class AuctionSearchBar extends StatelessWidget {
   final TextEditingController searchController;
   final AuctionStatusFilter statusFilter;
   final String? categoryFilter;
-  final VoidCallback onSearchChanged;
   final ValueChanged<AuctionStatusFilter> onStatusChanged;
   final ValueChanged<String?> onCategoryChanged;
   final int resultCount;
@@ -33,58 +31,61 @@ class AuctionSearchBar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          TextField(
-            controller: searchController,
-            onChanged: (_) => onSearchChanged(),
-            textInputAction: TextInputAction.search,
-            cursorColor: AppTheme.primary,
-            style: AppTheme.bodyStyle.copyWith(
-              color: AppTheme.foreground,
-              fontSize: 14,
-            ),
-            decoration: InputDecoration(
-              hintText: 'Дуудлага хайх (нэр, ангилал, ялагч)...',
-              hintStyle: AppTheme.bodyStyle.copyWith(
-                color: AppTheme.mutedForeground,
-                fontSize: 14,
-              ),
-              prefixIcon: const Icon(
-                Icons.search,
-                size: 20,
-                color: AppTheme.mutedForeground,
-              ),
-              suffixIcon: searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.close, size: 18),
-                      color: AppTheme.mutedForeground,
-                      onPressed: () {
-                        searchController.clear();
-                        onSearchChanged();
-                      },
-                    )
-                  : null,
-              filled: true,
-              fillColor: AppTheme.inputBackground,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(4),
-                borderSide: const BorderSide(color: AppTheme.border),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(4),
-                borderSide: const BorderSide(color: AppTheme.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(4),
-                borderSide: const BorderSide(
-                  color: AppTheme.primary,
-                  width: 2,
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: searchController,
+            builder: (context, value, _) {
+              return TextField(
+                controller: searchController,
+                textInputAction: TextInputAction.search,
+                cursorColor: AppTheme.primary,
+                style: AppTheme.bodyStyle.copyWith(
+                  color: AppTheme.foreground,
+                  fontSize: 14,
                 ),
-              ),
-            ),
+                decoration: InputDecoration(
+                  hintText: 'Дуудлага хайх (нэр, ангилал, ялагч)...',
+                  hintStyle: AppTheme.bodyStyle.copyWith(
+                    color: AppTheme.mutedForeground,
+                    fontSize: 14,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    size: 20,
+                    color: AppTheme.mutedForeground,
+                  ),
+                  suffixIcon: value.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close, size: 18),
+                          color: AppTheme.mutedForeground,
+                          onPressed: () {
+                            searchController.clear();
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: AppTheme.inputBackground,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: const BorderSide(color: AppTheme.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: const BorderSide(color: AppTheme.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    borderSide: const BorderSide(
+                      color: AppTheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
           const SizedBox(height: 10),
           SingleChildScrollView(
