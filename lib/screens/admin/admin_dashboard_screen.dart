@@ -13,6 +13,7 @@ import '../../widgets/dembee_logo.dart';
 import '../../widgets/go_home_button.dart';
 import '../../widgets/loading_widget.dart';
 import 'admin_auctions_tab.dart';
+import 'admin_reports_tab.dart';
 import 'admin_transactions_tab.dart';
 import 'admin_users_tab.dart';
 
@@ -34,15 +35,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _tab = widget.initialTab.clamp(0, 3);
+    _tab = widget.initialTab.clamp(0, 4);
   }
 
-  static const _tabLabels = ['Ерөнхий', 'Дуудлага', 'Хэрэглэгч', 'Гүйлгээ'];
+  static const _tabLabels = [
+    'Ерөнхий',
+    'Дуудлага',
+    'Хэрэглэгч',
+    'Гүйлгээ',
+    'Тайлан',
+  ];
   static const _tabIcons = [
     Icons.show_chart,
     Icons.gavel,
     Icons.people_outline,
     Icons.swap_horiz,
+    Icons.summarize_outlined,
   ];
 
   @override
@@ -164,6 +172,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             1 => AdminAuctionsTab(auctionService: _auctionService),
             2 => AdminUsersTab(creditsService: _creditsService),
             3 => AdminTransactionsTab(creditsService: _creditsService),
+            4 => AdminReportsTab(
+                auctionService: _auctionService,
+                creditsService: _creditsService,
+              ),
             _ => Center(
                 child: Text(
                   '${_tabLabels[_tab]} — удахгүй',
