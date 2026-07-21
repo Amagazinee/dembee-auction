@@ -64,9 +64,13 @@ class PurchaseModel {
 
   String get statusLabel => switch (status) {
         'completed' => 'Амжилттай',
+        'pending' => 'Хүлээгдэж буй',
+        'failed' => 'Амжилтгүй',
         'refunded' => 'Буцаагдсан',
         _ => status,
       };
+
+  bool get isPending => status == 'pending';
 
   static DateTime _parseTimestamp(dynamic value) {
     if (value is Timestamp) return value.toDate();

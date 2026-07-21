@@ -82,7 +82,15 @@ class CreditsService {
     });
   }
 
-  /// Туршилт — төлбөргүй багц худалдан авах (QPay холбогдоогүй)
+  /// Нэг худалдан авалтыг realtime хянах (QPay)
+  Stream<PurchaseModel?> watchPurchase(String purchaseId) {
+    return _purchases.doc(purchaseId).snapshots().map((doc) {
+      if (!doc.exists) return null;
+      return PurchaseModel.fromFirestore(doc);
+    });
+  }
+
+  /// Туршилт — зөвхөн dev (Cloud Functions байхгүй үед)
   Future<void> purchasePackageTest(BidPackage package) async {
     final uid = _uid;
     if (uid == null) throw const AuthException('Нэвтэрнэ үү');

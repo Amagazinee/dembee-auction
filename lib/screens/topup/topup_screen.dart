@@ -5,9 +5,10 @@ import '../../core/constants/bid_packages.dart';
 import '../../core/errors/app_exception.dart';
 import '../../core/utils/formatters.dart';
 import '../../services/credits_service.dart';
+import '../../services/qpay_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/dembee_app_bar.dart';
-import '../../widgets/loading_widget.dart';
+import '../../widgets/qpay_payment_sheet.dart';
 
 /// Figma TopUpView — Санал багц авах
 class TopUpScreen extends StatefulWidget {
@@ -19,8 +20,8 @@ class TopUpScreen extends StatefulWidget {
 
 class _TopUpScreenState extends State<TopUpScreen> {
   final _creditsService = CreditsService();
+  final _qpayService = QPayService();
   BidPackage? _selected;
-  String _paymentMethod = 'qpay';
   bool _isLoading = false;
   String? _error;
   String? _success;
@@ -39,15 +40,25 @@ class _TopUpScreenState extends State<TopUpScreen> {
     });
 
     try {
-      await _creditsService.purchasePackageTest(package);
-      if (mounted) {
+      final session = await _qpayService.createPayment(package.id);
+      if (!mounted) return;
+
+      final paid = await showQPayPaymentSheet(
+        context,
+        session: session,
+        creditsService: _creditsService,
+        qpayService: _qpayService,
+      );
+
+      if (!mounted) return;
+      if (paid == true) {
         setState(() {
           _success = '${package.amount} санал нэмэгдлээ!';
           _selected = null;
         });
       }
     } on AppException catch (e) {
-      setState(() => _error = e.message);
+      if (mounted) setState(() => _error = e.message);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -150,22 +161,21 @@ class _TopUpScreenState extends State<TopUpScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    _PaymentChip(
+                    const _PaymentChip(
                       label: 'QPay',
-                      selected: _paymentMethod == 'qpay',
-                      onTap: () => setState(() => _paymentMethod = 'qpay'),
+                      selected: true,
                     ),
                     const SizedBox(width: 12),
                     _PaymentChip(
-                      label: 'Golomt Bank',
-                      selected: _paymentMethod == 'golomt',
-                      onTap: () => setState(() => _paymentMethod = 'golomt'),
+                      label: 'Golomt Bank (удахгүй)',
+                      selected: false,
+                      enabled: false,
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '⚠️ Туршилт горим — одоогоор төлбөргүй нэмэгдэнэ. QPay удахгүй.',
+                  'QPay-ээр төлсний дараа санал автоматаар нэмэгдэнэ.',
                   style: AppTheme.bodyStyle.copyWith(
                     fontSize: 12,
                     color: AppTheme.mutedForeground,
@@ -190,7 +200,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Багц авах (туршилт)'),
+                        : const Text('QPay-ээр төлөх'),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -289,28 +299,37 @@ class _PaymentChip extends StatelessWidget {
   const _PaymentChip({
     required this.label,
     required this.selected,
-    required this.onTap,
+    this.enabled = true,
   });
 
   final String label;
   final bool selected;
-  final VoidCallback onTap;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: selected ? AppTheme.primary : AppTheme.border,
-            width: selected ? 2 : 1,
-          ),
-          borderRadius: BorderRadius.circular(4),
+    final borderColor = !enabled
+        ? AppTheme.border.withValues(alpha: 0.5)
+        : selected
+            ? AppTheme.primary
+            : AppTheme.border;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: borderColor,
+          width: selected ? 2 : 1,
         ),
-        child: Text(label, style: AppTheme.bodyStyle),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: AppTheme.bodyStyle.copyWith(
+          color: enabled
+              ? AppTheme.foreground
+              : AppTheme.mutedForeground,
+        ),
       ),
     );
   }
