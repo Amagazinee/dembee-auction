@@ -17,6 +17,11 @@ import {
   sweepPendingAuctions,
   AuctionData,
 } from "./auction_lifecycle";
+import {
+  checkQPayPayment,
+  createQPayPayment,
+  qpayCallback,
+} from "./qpay_payment";
 
 admin.initializeApp();
 
@@ -118,3 +123,5 @@ export const sweepAuctionLifecycle = onSchedule(
     }
   },
 );
+
+export { createQPayPayment, checkQPayPayment, qpayCallback };

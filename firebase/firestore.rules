@@ -215,11 +215,7 @@ service cloud.firestore {
         resource.data.userUid == request.auth.uid
         || isAdmin()
       );
-      allow create: if isSignedIn()
-        && request.resource.data.userUid == request.auth.uid
-        && request.resource.data.paymentMethod == 'test'
-        && request.resource.data.status == 'completed'
-        && isNotBanned(request.auth.uid);
+      allow create: if false;
       allow update: if isPurchaseRefund();
       allow delete: if false;
     }

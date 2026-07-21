@@ -54,4 +54,6 @@ class FirestoreFields {
   static const String paymentMethod = 'paymentMethod';
   static const String purchaseStatus = 'status';
   static const String refundedAt = 'refundedAt';
+  static const String qpayInvoiceId = 'qpayInvoiceId';
+  static const String completedAt = 'completedAt';
 }
