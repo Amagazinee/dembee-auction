@@ -174,18 +174,8 @@ class _HomeScreenState extends State<HomeScreen> {
               }
 
               final auctions = auctionSnap.data ?? [];
-              final now = DateTime.now();
-              final filter = AuctionFilter(
-                query: _searchController.text,
-                status: _statusFilter,
-                category: _categoryFilter,
-              );
-              final filteredAuctions = filter.apply(auctions, now);
+              final filterNow = DateTime.now();
               final active = auctions.where((a) => a.isOngoing).toList();
-              final displayAuctions = [
-                ...filteredAuctions.where((a) => a.isScheduled(now)),
-                ...filteredAuctions.where((a) => !a.isScheduled(now)),
-              ];
               final totalBids =
                   auctions.fold<int>(0, (s, a) => s + a.totalBids);
               final maxPhase = active.isEmpty
@@ -211,176 +201,237 @@ class _HomeScreenState extends State<HomeScreen> {
                       return AuctionLifecycleRunner(
                         auctions: auctions,
                         service: _auctionService,
-                        child: SecondTicker(
-                          builder: (context, now) {
-                            return LayoutBuilder(
-                              builder: (context, constraints) {
-                              final wide = constraints.maxWidth >= 900;
-                              final crossCount =
-                                  constraints.maxWidth >= 700 ? 2 : 1;
+                        child: ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _searchController,
+                          builder: (context, searchValue, _) {
+                            final searchFilter = AuctionFilter(
+                              query: searchValue.text,
+                              status: _statusFilter,
+                              category: _categoryFilter,
+                            );
+                            final searchFiltered =
+                                searchFilter.apply(auctions, filterNow);
 
-                              final mainContent = CustomScrollView(
-                                slivers: [
-                                  SliverToBoxAdapter(
-                                    child: AuctionSearchBar(
-                                      searchController: _searchController,
-                                      statusFilter: _statusFilter,
-                                      categoryFilter: _categoryFilter,
-                                      resultCount: filteredAuctions.length,
-                                      totalCount: auctions.length,
-                                      onSearchChanged: () => setState(() {}),
-                                      onStatusChanged: (value) =>
-                                          setState(() => _statusFilter = value),
-                                      onCategoryChanged: (value) =>
-                                          setState(() => _categoryFilter = value),
-                                    ),
-                                  ),
-                                  SliverToBoxAdapter(
-                                    child: HomeStatsRow(
-                                      activeCount: active.length,
-                                      maxPhase: maxPhase,
-                                      totalBids: totalBids,
-                                      myBids: myBids.length,
-                                    ),
-                                  ),
-                                  const SliverToBoxAdapter(
-                                    child: PhaseLegend(),
-                                  ),
-                                  if (displayAuctions.isEmpty)
-                                    SliverFillRemaining(
-                                      child: Center(
-                                        child: Text(
-                                          filteredAuctions.length != auctions.length ||
-                                                  _searchController.text
-                                                      .trim()
-                                                      .isNotEmpty
-                                              ? 'Хайлтын үр дүн олдсонгүй'
-                                              : 'Одоогоор дуудлага байхгүй',
-                                          style: const TextStyle(
-                                            color: AppTheme.mutedForeground,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                  else if (crossCount == 1)
-                                    SliverPadding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                        12,
-                                        0,
-                                        12,
-                                        16,
-                                      ),
-                                      sliver: SliverList(
-                                        delegate: SliverChildBuilderDelegate(
-                                          (context, index) {
-                                            final auction = displayAuctions[index];
-                                            return Padding(
-                                              padding: const EdgeInsets.only(
-                                                bottom: 12,
-                                              ),
-                                              child: _buildAuctionCard(
-                                                auction: auction,
-                                                bidBalance: bidBalance,
-                                                now: now,
-                                                user: user,
-                                                myBids: myBids,
-                                                recentBids: recentBids,
-                                                expanded: false,
-                                              ),
-                                            );
-                                          },
-                                          childCount: displayAuctions.length,
-                                        ),
-                                      ),
-                                    )
-                                  else
-                                    SliverPadding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                        12,
-                                        0,
-                                        12,
-                                        16,
-                                      ),
-                                      sliver: SliverGrid(
-                                        gridDelegate:
-                                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          mainAxisSpacing: 12,
-                                          crossAxisSpacing: 12,
-                                          mainAxisExtent: 520,
-                                        ),
-                                        delegate:
-                                            SliverChildBuilderDelegate(
-                                          (context, index) {
-                                            final auction = displayAuctions[index];
-                                            return _buildAuctionCard(
-                                              auction: auction,
-                                              bidBalance: bidBalance,
-                                              now: now,
-                                              user: user,
-                                              myBids: myBids,
-                                              recentBids: recentBids,
-                                              expanded: false,
-                                            );
-                                          },
-                                          childCount: displayAuctions.length,
-                                        ),
-                                      ),
-                                    ),
-                                  if (!wide)
-                                    SliverToBoxAdapter(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(12),
-                                        child: Column(
-                                          children: [
-                                            SizedBox(
-                                              height: 280,
-                                              child: LiveBidFeed(
-                                                auctions: auctions,
-                                                recentBids: recentBids,
-                                              ),
-                                            ),
-                                            HowItWorksPanel(),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              );
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                AuctionSearchBar(
+                                  searchController: _searchController,
+                                  statusFilter: _statusFilter,
+                                  categoryFilter: _categoryFilter,
+                                  resultCount: searchFiltered.length,
+                                  totalCount: auctions.length,
+                                  onStatusChanged: (value) =>
+                                      setState(() => _statusFilter = value),
+                                  onCategoryChanged: (value) =>
+                                      setState(() => _categoryFilter = value),
+                                ),
+                                Expanded(
+                                  child: SecondTicker(
+                                    builder: (context, now) {
+                                      final tickFilter = AuctionFilter(
+                                        query: searchValue.text,
+                                        status: _statusFilter,
+                                        category: _categoryFilter,
+                                      );
+                                      final tickFiltered =
+                                          tickFilter.apply(auctions, now);
+                                      final tickDisplayAuctions = [
+                                        ...tickFiltered
+                                            .where((a) => a.isScheduled(now)),
+                                        ...tickFiltered
+                                            .where((a) => !a.isScheduled(now)),
+                                      ];
 
-                              if (!wide) return mainContent;
+                                      return LayoutBuilder(
+                                        builder: (context, constraints) {
+                                          final wide =
+                                              constraints.maxWidth >= 900;
+                                          final crossCount =
+                                              constraints.maxWidth >= 700
+                                                  ? 2
+                                                  : 1;
 
-                              return Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(child: mainContent),
-                                  SizedBox(
-                                    width: 280,
-                                    child: Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                        0,
-                                        12,
-                                        12,
-                                        12,
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Expanded(
-                                            child: LiveBidFeed(
-                                              auctions: auctions,
-                                              recentBids: recentBids,
-                                            ),
-                                          ),
-                                          HowItWorksPanel(),
-                                        ],
-                                      ),
-                                    ),
+                                          final mainContent = CustomScrollView(
+                                            slivers: [
+                                              SliverToBoxAdapter(
+                                                child: HomeStatsRow(
+                                                  activeCount: active.length,
+                                                  maxPhase: maxPhase,
+                                                  totalBids: totalBids,
+                                                  myBids: myBids.length,
+                                                ),
+                                              ),
+                                              const SliverToBoxAdapter(
+                                                child: PhaseLegend(),
+                                              ),
+                                              if (tickDisplayAuctions.isEmpty)
+                                                SliverFillRemaining(
+                                                  child: Center(
+                                                    child: Text(
+                                                      tickFiltered.length !=
+                                                                  auctions
+                                                                      .length ||
+                                                              searchValue.text
+                                                                  .trim()
+                                                                  .isNotEmpty
+                                                          ? 'Хайлтын үр дүн олдсонгүй'
+                                                          : 'Одоогоор дуудлага байхгүй',
+                                                      style: const TextStyle(
+                                                        color: AppTheme
+                                                            .mutedForeground,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                              else if (crossCount == 1)
+                                                SliverPadding(
+                                                  padding:
+                                                      const EdgeInsets.fromLTRB(
+                                                    12,
+                                                    0,
+                                                    12,
+                                                    16,
+                                                  ),
+                                                  sliver: SliverList(
+                                                    delegate:
+                                                        SliverChildBuilderDelegate(
+                                                      (context, index) {
+                                                        final auction =
+                                                            tickDisplayAuctions[
+                                                                index];
+                                                        return Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                            bottom: 12,
+                                                          ),
+                                                          child:
+                                                              _buildAuctionCard(
+                                                            auction: auction,
+                                                            bidBalance:
+                                                                bidBalance,
+                                                            now: now,
+                                                            user: user,
+                                                            myBids: myBids,
+                                                            recentBids:
+                                                                recentBids,
+                                                            expanded: false,
+                                                          ),
+                                                        );
+                                                      },
+                                                      childCount:
+                                                          tickDisplayAuctions
+                                                              .length,
+                                                    ),
+                                                  ),
+                                                )
+                                              else
+                                                SliverPadding(
+                                                  padding:
+                                                      const EdgeInsets.fromLTRB(
+                                                    12,
+                                                    0,
+                                                    12,
+                                                    16,
+                                                  ),
+                                                  sliver: SliverGrid(
+                                                    gridDelegate:
+                                                        const SliverGridDelegateWithFixedCrossAxisCount(
+                                                      crossAxisCount: 2,
+                                                      mainAxisSpacing: 12,
+                                                      crossAxisSpacing: 12,
+                                                      mainAxisExtent: 520,
+                                                    ),
+                                                    delegate:
+                                                        SliverChildBuilderDelegate(
+                                                      (context, index) {
+                                                        final auction =
+                                                            tickDisplayAuctions[
+                                                                index];
+                                                        return _buildAuctionCard(
+                                                          auction: auction,
+                                                          bidBalance:
+                                                              bidBalance,
+                                                          now: now,
+                                                          user: user,
+                                                          myBids: myBids,
+                                                          recentBids:
+                                                              recentBids,
+                                                          expanded: false,
+                                                        );
+                                                      },
+                                                      childCount:
+                                                          tickDisplayAuctions
+                                                              .length,
+                                                    ),
+                                                  ),
+                                                ),
+                                              if (!wide)
+                                                SliverToBoxAdapter(
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            12),
+                                                    child: Column(
+                                                      children: [
+                                                        SizedBox(
+                                                          height: 280,
+                                                          child: LiveBidFeed(
+                                                            auctions: auctions,
+                                                            recentBids:
+                                                                recentBids,
+                                                          ),
+                                                        ),
+                                                        HowItWorksPanel(),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          );
+
+                                          if (!wide) return mainContent;
+
+                                          return Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(child: mainContent),
+                                              SizedBox(
+                                                width: 280,
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.fromLTRB(
+                                                    0,
+                                                    12,
+                                                    12,
+                                                    12,
+                                                  ),
+                                                  child: Column(
+                                                    children: [
+                                                      Expanded(
+                                                        child: LiveBidFeed(
+                                                          auctions: auctions,
+                                                          recentBids:
+                                                              recentBids,
+                                                        ),
+                                                      ),
+                                                      HowItWorksPanel(),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
                                   ),
-                                ],
-                              );
-                            },
-                          );
-                        },
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       );
                     },

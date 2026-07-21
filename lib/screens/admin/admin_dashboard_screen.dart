@@ -6,6 +6,7 @@ import '../../models/auction_model.dart';
 import '../../models/bid_history_model.dart';
 import '../../models/purchase_model.dart';
 import '../../models/user_model.dart';
+import '../../core/app_navigation.dart';
 import '../../services/auction_service.dart';
 import '../../services/credits_service.dart';
 import '../../theme/app_theme.dart';
@@ -83,7 +84,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
               tooltip: 'Буцах',
-              onPressed: () => context.pop(),
+              onPressed: () => popOrGoHome(context),
             ),
             actions: const [
               GoHomeIconButton(compact: true),

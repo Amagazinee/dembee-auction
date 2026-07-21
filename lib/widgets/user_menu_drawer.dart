@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/app_navigation.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
@@ -161,7 +162,7 @@ class UserMenuDrawer extends StatelessWidget {
                         badge: 'ADMIN',
                         onTap: () {
                           onClose();
-                          context.go('/admin');
+                          openFromMenu(context, '/admin');
                         },
                       ),
                     ],
@@ -179,7 +180,7 @@ class UserMenuDrawer extends StatelessWidget {
                       label: 'Профайл засах',
                       onTap: () {
                         onClose();
-                        context.go('/edit-profile');
+                        openFromMenu(context, '/edit-profile');
                       },
                     ),
                     _MenuItem(
@@ -187,7 +188,7 @@ class UserMenuDrawer extends StatelessWidget {
                       label: 'Санал багц авах',
                       onTap: () {
                         onClose();
-                        context.go('/topup');
+                        openFromMenu(context, '/topup');
                       },
                     ),
                     _MenuItem(
@@ -195,7 +196,7 @@ class UserMenuDrawer extends StatelessWidget {
                       label: 'Дуудлага худалдааны түүх',
                       onTap: () {
                         onClose();
-                        context.go('/purchases');
+                        openFromMenu(context, '/purchases');
                       },
                     ),
                     _MenuItem(
@@ -203,7 +204,7 @@ class UserMenuDrawer extends StatelessWidget {
                       label: 'Гүйлгээний түүх',
                       onTap: () {
                         onClose();
-                        context.go('/transactions');
+                        openFromMenu(context, '/transactions');
                       },
                     ),
                     _SectionHeader('дэмжлэг'),
@@ -212,7 +213,7 @@ class UserMenuDrawer extends StatelessWidget {
                       label: 'Санал хүсэлт',
                       onTap: () {
                         onClose();
-                        context.go('/feedback');
+                        openFromMenu(context, '/feedback');
                       },
                     ),
                     _MenuItem(
@@ -220,7 +221,7 @@ class UserMenuDrawer extends StatelessWidget {
                       label: 'Түгээмэл асуултууд',
                       onTap: () {
                         onClose();
-                        context.go('/faq');
+                        openFromMenu(context, '/faq');
                       },
                     ),
                     _MenuItem(
@@ -228,7 +229,7 @@ class UserMenuDrawer extends StatelessWidget {
                       label: 'Тусламж',
                       onTap: () {
                         onClose();
-                        context.go('/help');
+                        openFromMenu(context, '/help');
                       },
                     ),
                     _SectionHeader('нөхцөл'),
@@ -237,7 +238,7 @@ class UserMenuDrawer extends StatelessWidget {
                       label: 'Нууцлалын бодлого',
                       onTap: () {
                         onClose();
-                        context.go('/privacy');
+                        openFromMenu(context, '/privacy');
                       },
                     ),
                     _MenuItem(
@@ -245,7 +246,7 @@ class UserMenuDrawer extends StatelessWidget {
                       label: 'Үйлчилгээний нөхцөл',
                       onTap: () {
                         onClose();
-                        context.go('/terms');
+                        openFromMenu(context, '/terms');
                       },
                     ),
                     const SizedBox(height: 16),
@@ -265,7 +266,7 @@ class UserMenuDrawer extends StatelessWidget {
                       color: AppTheme.destructive,
                       onTap: () {
                         onClose();
-                        context.go('/delete-account');
+                        openFromMenu(context, '/delete-account');
                       },
                     ),
                     _MenuItem(

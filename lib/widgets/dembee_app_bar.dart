@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/app_navigation.dart';
 import '../models/user_model.dart';
 import '../providers/notification_notifier.dart';
 import '../theme/app_theme.dart';
@@ -40,6 +41,13 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: AppTheme.background,
       automaticallyImplyLeading: false,
+      leading: showHomeButton
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back),
+              tooltip: 'Буцах',
+              onPressed: () => popOrGoHome(context),
+            )
+          : null,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
         child: Container(height: 1, color: AppTheme.border),
@@ -85,7 +93,7 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         if (showHomeButton) const GoHomeIconButton(compact: true),
         InkWell(
-          onTap: () => context.go('/topup'),
+          onTap: () => context.push('/topup'),
           borderRadius: BorderRadius.circular(4),
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 10),

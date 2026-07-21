@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/app_navigation.dart';
 import '../theme/app_theme.dart';
 
 /// Нүүр хуудас руу буцах товч
@@ -46,14 +47,7 @@ class SubPageTopBar extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.arrow_back),
             tooltip: 'Буцах',
-            onPressed: onBack ??
-                () {
-                  if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    context.go('/home');
-                  }
-                },
+            onPressed: onBack ?? () => popOrGoHome(context),
           ),
           Expanded(
             child: Text(
