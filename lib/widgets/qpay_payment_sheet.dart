@@ -74,17 +74,22 @@ class _QPayPaymentSheetState extends State<QPayPaymentSheet> {
           });
         }
 
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            16,
-            20,
-            20 + MediaQuery.paddingOf(context).bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        final maxHeight = MediaQuery.sizeOf(context).height * 0.92;
+
+        return ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxHeight),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                16,
+                20,
+                20 + MediaQuery.paddingOf(context).bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
               Row(
                 children: [
                   Expanded(
@@ -169,7 +174,9 @@ class _QPayPaymentSheetState extends State<QPayPaymentSheet> {
                   color: AppTheme.mutedForeground,
                 ),
               ),
-            ],
+                ],
+              ),
+            ),
           ),
         );
       },
