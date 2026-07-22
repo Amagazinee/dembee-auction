@@ -59,7 +59,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => context.go('/topup'),
+                onPressed: () => context.push('/topup'),
                 child: const Text('Санал багц авах'),
               ),
               const SizedBox(height: 32),

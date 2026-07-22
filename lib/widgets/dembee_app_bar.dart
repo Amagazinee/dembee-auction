@@ -52,63 +52,92 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
         preferredSize: const Size.fromHeight(1),
         child: Container(height: 1, color: AppTheme.border),
       ),
-      title: InkWell(
-        onTap: showHomeButton ? null : () => context.go('/home'),
-        borderRadius: BorderRadius.circular(4),
-        child: Row(
-          children: [
-            const DembeeLogo(size: 28, textSize: 16),
-          if (showAdminBadge) ...[
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppTheme.primary),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                'АДМИН',
-                style: AppTheme.monoStyle.copyWith(fontSize: 9),
+      title: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = showHomeButton || constraints.maxWidth < 220;
+
+          return InkWell(
+            onTap: showHomeButton ? null : () => context.go('/home'),
+            borderRadius: BorderRadius.circular(4),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DembeeLogo(
+                    size: compact ? 24 : 28,
+                    textSize: compact ? 13 : 16,
+                    compact: compact,
+                  ),
+                  if (showAdminBadge) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: compact ? 6 : 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppTheme.primary),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'АДМИН',
+                        style: AppTheme.monoStyle.copyWith(
+                          fontSize: compact ? 8 : 9,
+                        ),
+                      ),
+                    ),
+                  ],
+                  if (showAddAuction) ...[
+                    const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      onPressed: onAddAuction,
+                      icon: const Icon(Icons.add, size: 16),
+                      label: const Text('Шинэ дуудлага нэмэх'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primary,
+                        side: const BorderSide(color: AppTheme.primary),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-          ],
-          if (showAddAuction) ...[
-            const SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: onAddAuction,
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Шинэ дуудлага нэмэх'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primary,
-                  side: const BorderSide(color: AppTheme.primary),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                ),
-              ),
-            ),
-          ],
-          ],
-        ),
+          );
+        },
       ),
       actions: [
         if (showHomeButton) const GoHomeIconButton(compact: true),
         InkWell(
-          onTap: () => context.push('/topup'),
+          onTap: () {
+            final location = GoRouterState.of(context).uri.path;
+            if (location != '/topup') {
+              context.push('/topup');
+            }
+          },
           borderRadius: BorderRadius.circular(4),
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 10),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: EdgeInsets.symmetric(
+              horizontal: showHomeButton ? 8 : 12,
+              vertical: 4,
+            ),
             decoration: BoxDecoration(
               border: Border.all(color: AppTheme.primary.withValues(alpha: 0.6)),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.bolt, size: 14, color: AppTheme.primary),
                 const SizedBox(width: 4),
                 Text(
-                  '$bidBalance санал',
-                  style: AppTheme.monoStyle.copyWith(fontSize: 12),
+                  showHomeButton ? '$bidBalance' : '$bidBalance санал',
+                  style: AppTheme.monoStyle.copyWith(
+                    fontSize: showHomeButton ? 11 : 12,
+                  ),
                 ),
                 const SizedBox(width: 2),
                 const Text('+', style: TextStyle(color: AppTheme.primary)),
@@ -132,19 +161,21 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 return Positioned(
                   right: 8,
                   top: 8,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.destructive,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '$unread',
-                      style: AppTheme.monoStyle.copyWith(
-                        fontSize: 9,
-                        color: Colors.white,
+                  child: IgnorePointer(
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.destructive,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$unread',
+                        style: AppTheme.monoStyle.copyWith(
+                          fontSize: 9,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),

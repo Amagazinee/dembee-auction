@@ -26,6 +26,32 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>khanbank</string>
+		<string>tdbbank</string>
+		<string>socialpay-payment</string>
+		<string>statebankmongolia</string>
+		<string>xacbank</string>
+		<string>capitronbank</string>
+		<string>bogdbank</string>
+		<string>nibank</string>
+		<string>most</string>
+		<string>transbank</string>
+		<string>mbank</string>
+		<string>arig</string>
+		<string>ckbank</string>
+		<string>qpaywallet</string>
+		<string>golomtbank</string>
+		<string>monpay</string>
+		<string>toki</string>
+		<string>ard</string>
+		<string>hipay</string>
+		<string>tdbwallet</string>
+		<string>sono</string>
+		<string>payon</string>
+		<string>tino</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

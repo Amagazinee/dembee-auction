@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../core/app_navigation.dart';
 import '../../core/constants/bid_packages.dart';
 import '../../core/errors/app_exception.dart';
 import '../../core/utils/formatters.dart';
@@ -206,7 +206,7 @@ class _TopUpScreenState extends State<TopUpScreen> {
                 const SizedBox(height: 12),
                 Center(
                   child: TextButton(
-                    onPressed: () => context.go('/home'),
+                    onPressed: () => popOrGoHome(context),
                     child: const Text('Буцах'),
                   ),
                 ),
