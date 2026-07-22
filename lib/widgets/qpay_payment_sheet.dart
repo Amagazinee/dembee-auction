@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../core/utils/formatters.dart';
 import '../models/purchase_model.dart';
 import '../services/credits_service.dart';
+import '../services/qpay_bank_launcher.dart';
 import '../services/qpay_service.dart';
 import '../theme/app_theme.dart';
 
@@ -78,23 +78,21 @@ class _QPayPaymentSheetState extends State<QPayPaymentSheet> {
     }
   }
 
-  Future<void> _openLink(String link) async {
-    final uri = Uri.tryParse(link);
-    if (uri == null) {
-      _showMessage('Буруу холбоос');
-      return;
+  Future<void> _openBankLink(QPayBankLink bank) async {
+    final result = await QPayBankLauncher.launchBankLink(bank);
+    switch (result) {
+      case QPayBankLaunchResult.openedApp:
+        return;
+      case QPayBankLaunchResult.openedStore:
+        _showMessage('Апп суулгасны дараа дахин төлнө үү');
+      case QPayBankLaunchResult.failed:
+        _showMessage('${bank.name} апп нээхэд алдаа гарлаа');
     }
+  }
 
-    final canOpen = await canLaunchUrl(uri);
-    if (!canOpen) {
-      _showMessage('Энэ төхөөрөмж дээр нээх боломжгүй');
-      return;
-    }
-
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!launched) {
-      _showMessage('Холбоос нээхэд алдаа гарлаа');
-    }
+  Future<void> _openLink(String link, {String label = 'QPay'}) async {
+    final bank = QPayBankLink(name: label, description: '', link: link);
+    await _openBankLink(bank);
   }
 
   void _showMessage(String message) {
@@ -181,7 +179,10 @@ class _QPayPaymentSheetState extends State<QPayPaymentSheet> {
                       OutlinedButton(
                         onPressed: widget.session.shortUrl.isEmpty
                             ? null
-                            : () => _openLink(widget.session.shortUrl),
+                            : () => _openLink(
+                                  widget.session.shortUrl,
+                                  label: 'QPay',
+                                ),
                         child: const Text('QPay хуудас нээх'),
                       )
                     else
@@ -193,7 +194,7 @@ class _QPayPaymentSheetState extends State<QPayPaymentSheet> {
                             OutlinedButton(
                               onPressed: bank.link.isEmpty
                                   ? null
-                                  : () => _openLink(bank.link),
+                                  : () => _openBankLink(bank),
                               child: Text(bank.name),
                             ),
                         ],
