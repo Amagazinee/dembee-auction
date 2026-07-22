@@ -34,6 +34,42 @@ class AuthService {
     return UserModel.fromFirestore(doc);
   }
 
+  /// Auth байгаа ч Firestore профайл байхгүй үед шинээр үүсгэнэ
+  Future<UserModel> _ensureUserProfile({
+    required String email,
+    String name = '',
+    String phone = '',
+  }) async {
+    final user = currentUser;
+    if (user == null) {
+      throw const AuthException('Нэвтрээгүй байна');
+    }
+
+    final ref = _firestore
+        .collection(AppConstants.usersCollection)
+        .doc(user.uid);
+
+    final existing = await ref.get();
+    if (existing.exists) {
+      return UserModel.fromFirestore(existing);
+    }
+
+    final profile = UserModel(
+      uid: user.uid,
+      name: name.isNotEmpty
+          ? name
+          : (user.displayName?.isNotEmpty == true
+              ? user.displayName!
+              : email.split('@').first),
+      phone: phone,
+      email: email,
+      createdAt: DateTime.now(),
+    );
+
+    await ref.set(profile.toFirestore());
+    return profile;
+  }
+
   Future<void> register({
     required String name,
     required String phone,
@@ -89,21 +125,19 @@ class AuthService {
         password: password,
       );
 
-      final profile = await getCurrentUserProfile();
-      if (profile == null) {
-        await _auth.signOut();
-        throw const AuthException(
-          'Бүртгэлийн мэдээлэл олдсонгүй. Firebase Console → Authentication '
-          'дээрээс энэ имэйлийг устгаад дахин бүртгүүлнэ үү.',
-        );
+      // Firestore профайл байхгүй бол үүсгэхийг оролдоно — амжилтгүй ч нэвтрэлтийг цуцлахгүй
+      try {
+        var profile = await getCurrentUserProfile();
+        if (profile == null) {
+          await _ensureUserProfile(email: email.trim());
+        }
+      } on FirebaseException catch (e) {
+        debugPrint('Профайл шалгах/үүсгэх алдаа: ${e.code} ${e.message}');
       }
 
       await _promoteSeedAdminIfNeeded(profile);
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapAuthError(e.code));
-    } on FirebaseException catch (e) {
-      await _auth.signOut();
-      throw FirestoreException(_mapFirestoreError(e));
     }
   }
 
