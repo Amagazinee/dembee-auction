@@ -32,11 +32,37 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   late int _tab;
   final _auctionService = AuctionService();
   final _creditsService = CreditsService();
+  final _tabScrollController = ScrollController();
+  bool _showTabScrollHint = false;
 
   @override
   void initState() {
     super.initState();
     _tab = widget.initialTab.clamp(0, 4);
+    _tabScrollController.addListener(_updateTabScrollHint);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateTabScrollHint());
+  }
+
+  @override
+  void dispose() {
+    _tabScrollController
+      ..removeListener(_updateTabScrollHint)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _updateTabScrollHint() {
+    if (!_tabScrollController.hasClients) return;
+    final showHint = _tabScrollController.position.maxScrollExtent > 0 &&
+        _tabScrollController.offset <
+            _tabScrollController.position.maxScrollExtent - 4;
+    if (showHint != _showTabScrollHint && mounted) {
+      setState(() => _showTabScrollHint = showHint);
+    }
+  }
+
+  void _selectTab(int index) {
+    setState(() => _tab = index);
   }
 
   static const _tabLabels = [
@@ -112,54 +138,87 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Column(
                 children: [
                   const Divider(height: 1, color: AppTheme.border),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Row(
-                      children: List.generate(_tabLabels.length, (i) {
-                        final active = _tab == i;
-                        return InkWell(
-                          onTap: () => setState(() => _tab = i),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: active
-                                      ? AppTheme.primary
-                                      : Colors.transparent,
-                                  width: 2,
+                  Stack(
+                    children: [
+                      SingleChildScrollView(
+                        controller: _tabScrollController,
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Row(
+                          children: List.generate(_tabLabels.length, (i) {
+                            final active = _tab == i;
+                            return InkWell(
+                              onTap: () => _selectTab(i),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
                                 ),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _tabIcons[i],
-                                  size: 16,
-                                  color: active
-                                      ? AppTheme.primary
-                                      : AppTheme.mutedForeground,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  _tabLabels[i],
-                                  style: AppTheme.bodyStyle.copyWith(
-                                    fontSize: 13,
-                                    color: active
-                                        ? AppTheme.primary
-                                        : AppTheme.mutedForeground,
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: active
+                                          ? AppTheme.primary
+                                          : Colors.transparent,
+                                      width: 2,
+                                    ),
                                   ),
                                 ),
-                              ],
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _tabIcons[i],
+                                      size: 16,
+                                      color: active
+                                          ? AppTheme.primary
+                                          : AppTheme.mutedForeground,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      _tabLabels[i],
+                                      style: AppTheme.bodyStyle.copyWith(
+                                        fontSize: 13,
+                                        color: active
+                                            ? AppTheme.primary
+                                            : AppTheme.mutedForeground,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                      if (_showTabScrollHint)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          bottom: 0,
+                          child: IgnorePointer(
+                            child: Container(
+                              width: 36,
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 4),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                  colors: [
+                                    AppTheme.background.withValues(alpha: 0),
+                                    AppTheme.background,
+                                  ],
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.chevron_right,
+                                size: 18,
+                                color: AppTheme.mutedForeground,
+                              ),
                             ),
                           ),
-                        );
-                      }),
-                    ),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -169,6 +228,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             0 => _OverviewTab(
                 auctionService: _auctionService,
                 creditsService: _creditsService,
+                onOpenReports: () => _selectTab(4),
               ),
             1 => AdminAuctionsTab(auctionService: _auctionService),
             2 => AdminUsersTab(creditsService: _creditsService),
@@ -196,10 +256,12 @@ class _OverviewTab extends StatelessWidget {
   const _OverviewTab({
     required this.auctionService,
     required this.creditsService,
+    required this.onOpenReports,
   });
 
   final AuctionService auctionService;
   final CreditsService creditsService;
+  final VoidCallback onOpenReports;
 
   static bool _isToday(DateTime dt) {
     final now = DateTime.now();
@@ -272,6 +334,20 @@ class _OverviewTab extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          OutlinedButton.icon(
+                            onPressed: onOpenReports,
+                            icon: const Icon(Icons.summarize_outlined, size: 18),
+                            label: const Text('Тайлан харах (CSV)'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppTheme.primary,
+                              side: const BorderSide(color: AppTheme.primary),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                           LayoutBuilder(
                             builder: (context, c) {
                               final cols = c.maxWidth > 600 ? 4 : 2;
