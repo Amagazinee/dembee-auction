@@ -111,7 +111,12 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         if (showHomeButton) const GoHomeIconButton(compact: true),
         InkWell(
-          onTap: () => context.push('/topup'),
+          onTap: () {
+            final location = GoRouterState.of(context).uri.path;
+            if (location != '/topup') {
+              context.push('/topup');
+            }
+          },
           borderRadius: BorderRadius.circular(4),
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 10),
@@ -156,19 +161,21 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
                 return Positioned(
                   right: 8,
                   top: 8,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    alignment: Alignment.center,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.destructive,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '$unread',
-                      style: AppTheme.monoStyle.copyWith(
-                        fontSize: 9,
-                        color: Colors.white,
+                  child: IgnorePointer(
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: AppTheme.destructive,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$unread',
+                        style: AppTheme.monoStyle.copyWith(
+                          fontSize: 9,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
