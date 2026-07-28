@@ -6,7 +6,6 @@ import '../models/user_model.dart';
 import '../providers/notification_notifier.dart';
 import '../theme/app_theme.dart';
 import 'dembee_logo.dart';
-import 'go_home_button.dart';
 import 'notif_drawer.dart';
 import 'user_menu_drawer.dart';
 
@@ -54,62 +53,73 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       title: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = showHomeButton || constraints.maxWidth < 220;
+          final screenWidth = MediaQuery.sizeOf(context).width;
+          final reservedActions = (showHomeButton ? 48.0 : 0) + 130 + 96;
+          final reservedLeading = showHomeButton ? 56.0 : 16.0;
+          final titleWidth = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : (screenWidth - reservedLeading - reservedActions)
+                  .clamp(72.0, screenWidth * 0.42);
+          final compact = showHomeButton || titleWidth < 220;
+          final iconOnly = showHomeButton && titleWidth < 150;
 
-          return InkWell(
-            onTap: showHomeButton ? null : () => context.go('/home'),
-            borderRadius: BorderRadius.circular(4),
+          return SizedBox(
+            width: titleWidth,
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DembeeLogo(
-                    size: compact ? 24 : 28,
-                    textSize: compact ? 13 : 16,
-                    compact: compact,
-                  ),
-                  if (showAdminBadge) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: compact ? 6 : 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppTheme.primary),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        'АДМИН',
-                        style: AppTheme.monoStyle.copyWith(
-                          fontSize: compact ? 8 : 9,
+              child: InkWell(
+                onTap: showHomeButton ? null : () => context.go('/home'),
+                borderRadius: BorderRadius.circular(4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DembeeLogo(
+                      size: compact ? 24 : 28,
+                      textSize: compact ? 12 : 16,
+                      compact: compact,
+                      showText: !iconOnly,
+                    ),
+                    if (showAdminBadge) ...[
+                      SizedBox(width: compact ? 4 : 6),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: compact ? 5 : 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppTheme.primary),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'АДМИН',
+                          style: AppTheme.monoStyle.copyWith(
+                            fontSize: compact ? 7 : 9,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                  if (showAddAuction) ...[
-                    const SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: onAddAuction,
-                      icon: const Icon(Icons.add, size: 16),
-                      label: const Text('Шинэ дуудлага нэмэх'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primary,
-                        side: const BorderSide(color: AppTheme.primary),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ],
+                    if (showAddAuction) ...[
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: onAddAuction,
+                        icon: const Icon(Icons.add, size: 16),
+                        label: const Text('Шинэ дуудлага нэмэх'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primary,
+                          side: const BorderSide(color: AppTheme.primary),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           );
         },
       ),
       actions: [
-        if (showHomeButton) const GoHomeIconButton(compact: true),
         InkWell(
           onTap: () {
             final location = GoRouterState.of(context).uri.path;
