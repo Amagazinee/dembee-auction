@@ -22,6 +22,7 @@ import {
   createQPayPayment,
   qpayCallback,
 } from "./qpay_payment";
+import { verifyEmailForPasswordReset } from "./password_reset";
 
 admin.initializeApp();
 
@@ -125,3 +126,4 @@ export const sweepAuctionLifecycle = onSchedule(
 );
 
 export { createQPayPayment, checkQPayPayment, qpayCallback };
+export { verifyEmailForPasswordReset };

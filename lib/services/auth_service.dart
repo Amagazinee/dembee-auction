@@ -1,5 +1,6 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../core/constants/app_constants.dart';
@@ -11,11 +12,15 @@ class AuthService {
   AuthService({
     FirebaseAuth? auth,
     FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
   })  : _auth = auth ?? FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _functions = functions ??
+            FirebaseFunctions.instanceFor(region: 'asia-southeast1');
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions _functions;
 
   User? get currentUser => _auth.currentUser;
 
@@ -175,7 +180,12 @@ class AuthService {
     }
 
     try {
+      await _functions.httpsCallable('verifyEmailForPasswordReset').call({
+        'email': trimmed,
+      });
       await _auth.sendPasswordResetEmail(email: trimmed);
+    } on FirebaseFunctionsException catch (e) {
+      throw AuthException(_mapFunctionsError(e));
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapAuthError(e.code));
     }
@@ -206,6 +216,15 @@ class AuthService {
     } catch (_) {
       await _auth.signOut();
     }
+  }
+
+  String _mapFunctionsError(FirebaseFunctionsException e) {
+    return switch (e.code) {
+      'not-found' => e.message ?? 'Энэ имэйлээр бүртгэл олдсонгүй',
+      'invalid-argument' => e.message ?? 'И-мэйл хаягаа оруулна уу',
+      'unavailable' => 'Сервер түр хүрэхгүй байна. Дахин оролдоно уу',
+      _ => e.message ?? 'Алдаа гарлаа: ${e.code}',
+    };
   }
 
   String _mapAuthError(String code) {
