@@ -4,7 +4,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 
 const region = "asia-southeast1";
-const firebaseWebApiKey = defineSecret("FIREBASE_WEB_API_KEY");
+const authWebApiKey = defineSecret("AUTH_WEB_API_KEY");
 
 const PROJECT_ID = "dembee-auction";
 const CONTINUE_URL = `https://${PROJECT_ID}.firebaseapp.com/reset-password`;
@@ -52,7 +52,7 @@ async function sendPasswordResetEmail(email: string, apiKey: string) {
 
 /** Бүртгэлтэй имэйлд нууц үг сэргээх холбоос илгээнэ (апп руу чиглүүлнэ) */
 export const requestPasswordReset = onCall(
-  { region, secrets: [firebaseWebApiKey] },
+  { region, secrets: [authWebApiKey] },
   async (request) => {
     const email = (request.data?.email as string | undefined)?.trim();
     if (!email) {
@@ -81,11 +81,11 @@ export const requestPasswordReset = onCall(
       );
     }
 
-    const apiKey = firebaseWebApiKey.value()?.trim();
+    const apiKey = authWebApiKey.value()?.trim();
     if (!apiKey) {
       throw new HttpsError(
         "failed-precondition",
-        "Firebase API түлхүүр тохируулагдаагүй. Админ firebase functions:secrets:set FIREBASE_WEB_API_KEY ажиллуулна уу",
+        "Firebase API түлхүүр тохируулагдаагүй. Админ firebase functions:secrets:set AUTH_WEB_API_KEY ажиллуулна уу",
       );
     }
 
