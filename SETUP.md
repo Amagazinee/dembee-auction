@@ -289,6 +289,15 @@ powershell -ExecutionPolicy Bypass -File scripts\windows-emulator-fix.ps1
 
 Дараа нь `flutter run`. `gphone16k` эмуляторыг устгаад **Pixel 7 + API 34** ашиглана.
 
+### Хар дэлгэц (Impeller алдаа)
+
+Эмулятор хар хэвээр бол:
+```powershell
+flutter run -d emulator-5554 --no-enable-impeller
+```
+
+Эсвэл Device Manager → Pixel 7 → Edit → Graphics: **Hardware - GLES 2.0**
+
 ---
 
 ## 7.1 «Тохиргоо шаардлагатай» — апп ажиллахгүй
