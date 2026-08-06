@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/auth_state_notifier.dart';
@@ -8,6 +7,7 @@ import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/auction/auction_detail_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
+import '../screens/auth/reset_password_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/topup/topup_screen.dart';
 import '../screens/profile/delete_account_screen.dart';
@@ -39,7 +39,13 @@ class AppRouter {
             final isLoggedIn = authNotifier.isLoggedIn;
             final location = state.matchedLocation;
 
-            final publicRoutes = ['/', '/login', '/register', '/setup'];
+            final publicRoutes = [
+              '/',
+              '/login',
+              '/register',
+              '/reset-password',
+              '/setup',
+            ];
             final isPublic = publicRoutes.contains(location);
 
             if (!isLoggedIn && !isPublic) return '/login';
@@ -65,6 +71,13 @@ class AppRouter {
             GoRoute(
               path: '/register',
               builder: (context, state) => const RegisterScreen(),
+            ),
+            GoRoute(
+              path: '/reset-password',
+              builder: (context, state) {
+                final oobCode = state.uri.queryParameters['oobCode'];
+                return ResetPasswordScreen(oobCode: oobCode);
+              },
             ),
             GoRoute(
               path: '/home',

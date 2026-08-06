@@ -1,7 +1,7 @@
 name: dembee_app
 description: "Дэмбээ (Dembee) — Монголын уламжлалт дуудлага худалдааны апп"
 publish_to: 'none'
-version: 1.0.0+7
+version: 1.0.0+8
 
 environment:
   sdk: ^3.12.2
@@ -21,6 +21,7 @@ dependencies:
 
   # Routing
   go_router: ^14.8.1
+  app_links: ^6.4.0
 
   # UI
   google_fonts: ^6.2.1

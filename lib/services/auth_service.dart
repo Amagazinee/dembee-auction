@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
+import '../core/constants/auth_constants.dart';
 import '../core/constants/app_constants.dart';
 import '../core/constants/firestore_fields.dart';
 import '../core/errors/app_exception.dart';
@@ -180,12 +181,50 @@ class AuthService {
     }
 
     try {
-      await _functions.httpsCallable('verifyEmailForPasswordReset').call({
+      await _functions.httpsCallable('requestPasswordReset').call({
         'email': trimmed,
       });
-      await _auth.sendPasswordResetEmail(email: trimmed);
     } on FirebaseFunctionsException catch (e) {
+      if (e.code == 'failed-precondition') {
+        await _sendPasswordResetEmailFromClient(trimmed);
+        return;
+      }
       throw AuthException(_mapFunctionsError(e));
+    }
+  }
+
+  Future<void> confirmPasswordReset({
+    required String oobCode,
+    required String newPassword,
+  }) async {
+    if (newPassword.length < 6) {
+      throw const AuthException('Нууц үг хэтэрхий богино байна (6+ тэмдэгт)');
+    }
+
+    try {
+      await _auth.verifyPasswordResetCode(oobCode);
+      await _auth.confirmPasswordReset(
+        code: oobCode,
+        newPassword: newPassword,
+      );
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapPasswordResetError(e.code));
+    }
+  }
+
+  Future<void> _sendPasswordResetEmailFromClient(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(
+        email: email,
+        actionCodeSettings: ActionCodeSettings(
+          url: AuthConstants.passwordResetContinueUrl,
+          handleCodeInApp: true,
+          androidPackageName: AuthConstants.androidPackageName,
+          androidInstallApp: true,
+          androidMinimumVersion: '1',
+          iOSBundleId: AuthConstants.iosBundleId,
+        ),
+      );
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapAuthError(e.code));
     }
@@ -216,6 +255,17 @@ class AuthService {
     } catch (_) {
       await _auth.signOut();
     }
+  }
+
+  String _mapPasswordResetError(String code) {
+    return switch (code) {
+      'expired-action-code' =>
+        'Холбоосын хугацаа дууссан. Дахин нууц үг сэргээх имэйл илгээнэ үү',
+      'invalid-action-code' =>
+        'Холбоос хүчингүй байна. Дахин нууц үг сэргээх имэйл илгээнэ үү',
+      'weak-password' => 'Нууц үг хэтэрхий богино байна (6+ тэмдэгт)',
+      _ => _mapAuthError(code),
+    };
   }
 
   String _mapFunctionsError(FirebaseFunctionsException e) {

@@ -6,6 +6,7 @@ import 'core/constants/app_constants.dart';
 import 'core/errors/app_exception.dart';
 import 'providers/auth_state_notifier.dart';
 import 'routes/app_router.dart';
+import 'services/deep_link_service.dart';
 import 'services/firebase_service.dart';
 import 'theme/app_theme.dart';
 
@@ -29,14 +30,35 @@ void main() async {
   }
 
   final appRouter = AppRouter(authNotifier: authNotifier);
+  final deepLinkService = DeepLinkService(router: appRouter.router);
+  await deepLinkService.initialize();
 
-  runApp(DembeeApp(router: appRouter.router));
+  runApp(DembeeApp(
+    router: appRouter.router,
+    deepLinkService: deepLinkService,
+  ));
 }
 
-class DembeeApp extends StatelessWidget {
-  const DembeeApp({super.key, required this.router});
+class DembeeApp extends StatefulWidget {
+  const DembeeApp({
+    super.key,
+    required this.router,
+    required this.deepLinkService,
+  });
 
   final GoRouter router;
+  final DeepLinkService deepLinkService;
+
+  @override
+  State<DembeeApp> createState() => _DembeeAppState();
+}
+
+class _DembeeAppState extends State<DembeeApp> {
+  @override
+  void dispose() {
+    widget.deepLinkService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +66,7 @@ class DembeeApp extends StatelessWidget {
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      routerConfig: router,
+      routerConfig: widget.router,
     );
   }
 }
