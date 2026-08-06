@@ -82,7 +82,8 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       await _authService.sendPasswordResetEmail(email: email);
       if (!mounted) return;
-      setState(() => _successMessage = 'Сэргээх холбоос $email руу илгээгдлээ');
+      setState(() => _successMessage =
+          'Сэргээх холбоос $email руу илгээгдлээ. Имэйлээ шалгаад холбоос дээр дарж апп дээр шинэ нууц үгээ тохируулна уу.');
     } on AppException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
