@@ -48,6 +48,15 @@ class CreditsService {
         });
   }
 
+  /// Гүйлгээний түүх — зөвхөн амжилттай болон буцаагдсан
+  Stream<List<PurchaseModel>> watchUserTransactionHistory() {
+    return watchUserPurchases().map(
+      (list) => list
+          .where((purchase) => purchase.isCompleted || purchase.isRefunded)
+          .toList(),
+    );
+  }
+
   /// Админ — бүх худалдан авалт (буцаагдсан орно)
   Stream<List<PurchaseModel>> watchAllPurchases() {
     return _purchases.snapshots().map((s) {
