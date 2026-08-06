@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../core/app_navigation.dart';
 import '../../core/errors/app_exception.dart';
 import '../../models/auction_model.dart';
 import '../../models/bid_history_model.dart';
@@ -99,7 +99,7 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                             isSubmitting: _isBidding,
                             errorMessage: _bidError,
                             onPlaceBid: (amount) => _placeBid(auction, amount),
-                            onClose: () => context.pop(),
+                            onClose: () => popOrGoHome(context),
                           );
                         },
                       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/app_navigation.dart';
 import '../core/constants/auction_phases.dart';
 import '../core/utils/formatters.dart';
 import '../models/auction_model.dart';
@@ -98,7 +99,7 @@ class _AuctionLiveViewState extends State<AuctionLiveView> {
       children: [
         _LiveHeader(
           bidBalance: widget.bidBalance,
-          onClose: widget.onClose ?? () => Navigator.of(context).maybePop(),
+          onClose: widget.onClose ?? () => popOrGoHome(context),
         ),
         Expanded(
           child: SingleChildScrollView(
@@ -449,7 +450,7 @@ class _PendingView extends StatelessWidget {
       children: [
         _LiveHeader(
           bidBalance: bidBalance,
-          onClose: onClose ?? () => Navigator.of(context).maybePop(),
+          onClose: onClose ?? () => popOrGoHome(context),
         ),
         Expanded(
           child: Center(
@@ -519,7 +520,7 @@ class _FinishedView extends StatelessWidget {
       children: [
         _LiveHeader(
           bidBalance: bidBalance,
-          onClose: onClose ?? () => Navigator.of(context).maybePop(),
+          onClose: onClose ?? () => popOrGoHome(context),
         ),
         Expanded(
           child: Center(

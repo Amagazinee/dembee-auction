@@ -68,7 +68,7 @@ class AuctionCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       borderRadius: BorderRadius.circular(AppTheme.radius),
       child: InkWell(
-        onTap: onOpen ?? () => context.go('/auction/${auction.id}'),
+        onTap: onOpen ?? () => context.push('/auction/${auction.id}'),
         child: DecoratedBox(
           decoration: BoxDecoration(
             border: Border.all(color: AppTheme.border),
@@ -246,7 +246,7 @@ class AuctionCard extends StatelessWidget {
                       child: ElevatedButton.icon(
                         onPressed: expanded
                             ? (_canQuickBid(now) ? onQuickBid : null)
-                            : (onOpen ?? () => context.go('/auction/${auction.id}')),
+                            : (onOpen ?? () => context.push('/auction/${auction.id}')),
                         icon: isBidding
                             ? const SizedBox(
                                 width: 16,
@@ -421,7 +421,7 @@ class _ScheduledCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       borderRadius: BorderRadius.circular(AppTheme.radius),
       child: InkWell(
-        onTap: onOpen ?? () => context.go('/auction/${auction.id}'),
+        onTap: onOpen ?? () => context.push('/auction/${auction.id}'),
         child: DecoratedBox(
           decoration: BoxDecoration(
             border: Border.all(color: const Color(0xFF60A5FA).withValues(alpha: 0.5)),
@@ -521,7 +521,7 @@ class _FinishedCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       borderRadius: BorderRadius.circular(AppTheme.radius),
       child: InkWell(
-        onTap: onOpen ?? () => context.go('/auction/${auction.id}'),
+        onTap: onOpen ?? () => context.push('/auction/${auction.id}'),
         child: DecoratedBox(
           decoration: BoxDecoration(
             border: Border.all(color: AppTheme.border),
