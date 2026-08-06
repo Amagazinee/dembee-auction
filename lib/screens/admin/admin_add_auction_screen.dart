@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +41,8 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
 
   String _category = AuctionCategories.all.first;
   int _bidIncrement = 2;
-  File? _imageFile;
+  XFile? _imageFile;
+  Uint8List? _imageBytes;
   bool _submitting = false;
   late DateTime _startsAt;
 
@@ -74,8 +75,8 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
     );
     if (file == null) return;
 
-    final bytes = await file.length();
-    if (bytes > 5 * 1024 * 1024) {
+    final size = await file.length();
+    if (size > 5 * 1024 * 1024) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -87,7 +88,13 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
       return;
     }
 
-    setState(() => _imageFile = File(file.path));
+    final imageBytes = await file.readAsBytes();
+    if (!mounted) return;
+
+    setState(() {
+      _imageFile = file;
+      _imageBytes = imageBytes;
+    });
   }
 
   Future<void> _submit() async {
@@ -109,10 +116,13 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
       final auctionId = _auctionService.createAuctionId();
       String? imageUrl;
 
-      if (_imageFile != null) {
+      if (_imageFile != null && _imageBytes != null) {
+        final picked = _imageFile!;
+        final ext = picked.path.split('.').last.toLowerCase();
         imageUrl = await _storageService.uploadAuctionImage(
           auctionId: auctionId,
-          file: _imageFile!,
+          bytes: _imageBytes!,
+          extension: ext,
         );
       }
 
@@ -219,11 +229,11 @@ class _AdminAddAuctionScreenState extends State<AdminAddAuctionScreen> {
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(color: AppTheme.border),
                   ),
-                  child: _imageFile != null
+                  child: _imageBytes != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(4),
-                          child: Image.file(
-                            _imageFile!,
+                          child: Image.memory(
+                            _imageBytes!,
                             width: double.infinity,
                             fit: BoxFit.cover,
                           ),

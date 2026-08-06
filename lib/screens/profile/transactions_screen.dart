@@ -18,7 +18,7 @@ class TransactionsScreen extends StatelessWidget {
     return ProfileSubPageScaffold(
       title: 'Санал багц худалдан авалтын түүх',
       child: StreamBuilder<List<PurchaseModel>>(
-        stream: service.watchUserPurchases(),
+        stream: service.watchUserTransactionHistory(),
         builder: (context, snap) {
           if (snap.connectionState == ConnectionState.waiting) {
             return const LoadingWidget(message: 'Ачаалж байна...');
