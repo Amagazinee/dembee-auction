@@ -181,16 +181,14 @@ class AuthService {
     }
 
     try {
-      await _functions.httpsCallable('requestPasswordReset').call({
+      await _functions.httpsCallable('verifyEmailForPasswordReset').call({
         'email': trimmed,
       });
     } on FirebaseFunctionsException catch (e) {
-      if (e.code == 'failed-precondition') {
-        await _sendPasswordResetEmailFromClient(trimmed);
-        return;
-      }
       throw AuthException(_mapFunctionsError(e));
     }
+
+    await _sendPasswordResetEmailWithFallback(trimmed);
   }
 
   Future<void> confirmPasswordReset({
@@ -212,7 +210,7 @@ class AuthService {
     }
   }
 
-  Future<void> _sendPasswordResetEmailFromClient(String email) async {
+  Future<void> _sendPasswordResetEmailWithFallback(String email) async {
     try {
       await _auth.sendPasswordResetEmail(
         email: email,
@@ -226,8 +224,32 @@ class AuthService {
         ),
       );
     } on FirebaseAuthException catch (e) {
-      throw AuthException(_mapAuthError(e.code));
+      if (_shouldRetryPasswordResetWithoutActionSettings(e.code)) {
+        try {
+          await _auth.sendPasswordResetEmail(email: email);
+          return;
+        } on FirebaseAuthException catch (retryError) {
+          throw AuthException(_mapPasswordResetSendError(retryError.code));
+        }
+      }
+      throw AuthException(_mapPasswordResetSendError(e.code));
     }
+  }
+
+  bool _shouldRetryPasswordResetWithoutActionSettings(String code) {
+    return code == 'invalid-continue-uri' ||
+        code == 'unauthorized-continue-uri' ||
+        code == 'invalid-dynamic-link-domain';
+  }
+
+  String _mapPasswordResetSendError(String code) {
+    return switch (code) {
+      'user-not-found' => 'Энэ имэйлээр бүртгэл олдсонгүй',
+      'invalid-email' => 'Имэйл буруу байна',
+      'too-many-requests' => 'Хэт олон удаа оролдлоо. Түр хүлээнэ үү',
+      'network-request-failed' => 'Сүлжээний алдаа. Интернэт холболтоо шалгана уу',
+      _ => 'Нууц үг сэргээх имэйл илгээхэд алдаа гарлаа',
+    };
   }
 
   Future<void> _promoteSeedAdminIfNeeded(UserModel profile) async {
