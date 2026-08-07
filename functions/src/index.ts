@@ -129,4 +129,3 @@ export const sweepAuctionLifecycle = onSchedule(
 export { createQPayPayment, checkQPayPayment, qpayCallback };
 export { requestPasswordReset, verifyEmailForPasswordReset };
 export { uploadAuctionImageAdmin };
-export { purgeHistoricalData } from "./admin_purge";

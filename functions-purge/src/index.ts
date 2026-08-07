@@ -2,6 +2,8 @@ import * as admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 
+admin.initializeApp();
+
 const region = "asia-southeast1";
 const BATCH_SIZE = 400;
 
