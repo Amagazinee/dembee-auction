@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/auction_display_list.dart';
 import '../../core/auction_filter.dart';
 import '../../core/errors/app_exception.dart';
 import '../../models/auction_model.dart';
@@ -38,9 +39,29 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _biddingAuctionId;
   AuctionStatusFilter _statusFilter = AuctionStatusFilter.all;
   String? _categoryFilter;
+  int _finishedVisibleCount = kFinishedAuctionsPageSize;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_resetFinishedPagination);
+  }
+
+  void _resetFinishedPagination() {
+    if (_finishedVisibleCount != kFinishedAuctionsPageSize) {
+      setState(() => _finishedVisibleCount = kFinishedAuctionsPageSize);
+    }
+  }
+
+  void _loadMoreFinished() {
+    setState(() {
+      _finishedVisibleCount += kFinishedAuctionsPageSize;
+    });
+  }
 
   @override
   void dispose() {
+    _searchController.removeListener(_resetFinishedPagination);
     _searchController.dispose();
     super.dispose();
   }
@@ -223,10 +244,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   categoryFilter: _categoryFilter,
                                   resultCount: searchFiltered.length,
                                   totalCount: auctions.length,
-                                  onStatusChanged: (value) =>
-                                      setState(() => _statusFilter = value),
-                                  onCategoryChanged: (value) =>
-                                      setState(() => _categoryFilter = value),
+                                  onStatusChanged: (value) => setState(() {
+                                    _statusFilter = value;
+                                    _finishedVisibleCount =
+                                        kFinishedAuctionsPageSize;
+                                  }),
+                                  onCategoryChanged: (value) => setState(() {
+                                    _categoryFilter = value;
+                                    _finishedVisibleCount =
+                                        kFinishedAuctionsPageSize;
+                                  }),
                                 ),
                                 Expanded(
                                   child: SecondTicker(
@@ -238,12 +265,15 @@ class _HomeScreenState extends State<HomeScreen> {
                                       );
                                       final tickFiltered =
                                           tickFilter.apply(auctions, now);
-                                      final tickDisplayAuctions = [
-                                        ...tickFiltered
-                                            .where((a) => a.isScheduled(now)),
-                                        ...tickFiltered
-                                            .where((a) => !a.isScheduled(now)),
-                                      ];
+                                      final displayList =
+                                          AuctionDisplayList.fromFiltered(
+                                        filtered: tickFiltered,
+                                        now: now,
+                                        finishedVisibleCount:
+                                            _finishedVisibleCount,
+                                      );
+                                      final tickDisplayAuctions =
+                                          displayList.visible;
 
                                       return LayoutBuilder(
                                         builder: (context, constraints) {
@@ -366,6 +396,44 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       childCount:
                                                           tickDisplayAuctions
                                                               .length,
+                                                    ),
+                                                  ),
+                                                ),
+                                              if (displayList.hasMoreFinished)
+                                                SliverToBoxAdapter(
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.fromLTRB(
+                                                      12,
+                                                      0,
+                                                      12,
+                                                      8,
+                                                    ),
+                                                    child: OutlinedButton.icon(
+                                                      onPressed:
+                                                          _loadMoreFinished,
+                                                      icon: const Icon(
+                                                        Icons
+                                                            .expand_more_rounded,
+                                                        size: 20,
+                                                      ),
+                                                      label: Text(
+                                                        'Илүү үзэх (${displayList.hiddenFinishedCount})',
+                                                      ),
+                                                      style: OutlinedButton
+                                                          .styleFrom(
+                                                        foregroundColor:
+                                                            AppTheme.primary,
+                                                        side: const BorderSide(
+                                                          color:
+                                                              AppTheme.primary,
+                                                        ),
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                          vertical: 14,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),

@@ -7,6 +7,8 @@ import '../../models/bid_history_model.dart';
 import '../../models/purchase_model.dart';
 import '../../models/user_model.dart';
 import '../../core/app_navigation.dart';
+import '../../core/errors/app_exception.dart';
+import '../../services/admin_purge_service.dart';
 import '../../services/auction_service.dart';
 import '../../services/credits_service.dart';
 import '../../theme/app_theme.dart';
@@ -252,7 +254,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 }
 
-class _OverviewTab extends StatelessWidget {
+class _OverviewTab extends StatefulWidget {
   const _OverviewTab({
     required this.auctionService,
     required this.creditsService,
@@ -263,6 +265,14 @@ class _OverviewTab extends StatelessWidget {
   final CreditsService creditsService;
   final VoidCallback onOpenReports;
 
+  @override
+  State<_OverviewTab> createState() => _OverviewTabState();
+}
+
+class _OverviewTabState extends State<_OverviewTab> {
+  final _purgeService = AdminPurgeService();
+  bool _purging = false;
+
   static bool _isToday(DateTime dt) {
     final now = DateTime.now();
     return dt.year == now.year &&
@@ -270,31 +280,92 @@ class _OverviewTab extends StatelessWidget {
         dt.day == now.day;
   }
 
+  Future<void> _confirmAndPurge(int finishedCount, int purchaseCount) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.card,
+        title: const Text('Түүх цэвэрлэх'),
+        content: Text(
+          'Дараах өгөгдлийг бүрмөсөн устгана:\n\n'
+          '• Дууссан дуудлага ($finishedCount)\n'
+          '• Бүх саналын түүх\n'
+          '• Цэнэглэлтийн түүх ($purchaseCount гүйлгээ)\n'
+          '• Мэдэгдлүүд\n\n'
+          'Идэвхтэй болон төлөвлөгдсөн дуудлага, хэрэглэгчийн данс хэвээр үлдэнэ.',
+          style: AppTheme.bodyStyle.copyWith(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Болих'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppTheme.destructive,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Цэвэрлэх'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _purging = true);
+    try {
+      final result = await _purgeService.purgeHistoricalData();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Цэвэрлэгдлээ: ${result.auctions} дуудлага, '
+            '${result.auctionHistory} санал, '
+            '${result.purchases} гүйлгээ, '
+            '${result.notifications} мэдэгдэл',
+          ),
+          backgroundColor: AppTheme.secondary,
+        ),
+      );
+    } on AppException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppTheme.destructive,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _purging = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<AuctionModel>>(
-      stream: auctionService.watchAuctions(),
+      stream: widget.auctionService.watchAuctions(),
       builder: (context, auctionSnap) {
         if (!auctionSnap.hasData) {
           return const LoadingWidget();
         }
 
         return StreamBuilder<List<UserModel>>(
-          stream: creditsService.watchAllUsersList(),
+          stream: widget.creditsService.watchAllUsersList(),
           builder: (context, userSnap) {
             if (!userSnap.hasData) {
               return const LoadingWidget();
             }
 
             return StreamBuilder<List<PurchaseModel>>(
-              stream: creditsService.watchAllCompletedPurchases(),
+              stream: widget.creditsService.watchAllPurchases(),
               builder: (context, purchaseSnap) {
                 if (!purchaseSnap.hasData) {
                   return const LoadingWidget();
                 }
 
                 return StreamBuilder<List<BidHistoryModel>>(
-                  stream: auctionService.watchAllBidHistory(),
+                  stream: widget.auctionService.watchAllBidHistory(),
                   builder: (context, bidSnap) {
                     if (!bidSnap.hasData) {
                       return const LoadingWidget();
@@ -314,8 +385,9 @@ class _OverviewTab extends StatelessWidget {
                         auctions.fold<int>(0, (s, a) => s + a.totalBids);
                     final usersToday =
                         users.where((u) => _isToday(u.createdAt)).length;
-                    final totalRevenue =
-                        purchases.fold<int>(0, (s, p) => s + p.amount);
+                    final totalRevenue = purchases
+                        .where((p) => p.isCompleted)
+                        .fold<int>(0, (s, p) => s + p.amount);
                     final bidsToday =
                         bids.where((b) => _isToday(b.createdAt)).length;
 
@@ -335,7 +407,7 @@ class _OverviewTab extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           OutlinedButton.icon(
-                            onPressed: onOpenReports,
+                            onPressed: widget.onOpenReports,
                             icon: const Icon(Icons.summarize_outlined, size: 18),
                             label: const Text('Тайлан харах (CSV)'),
                             style: OutlinedButton.styleFrom(
@@ -345,6 +417,66 @@ class _OverviewTab extends StatelessWidget {
                                 horizontal: 16,
                                 vertical: 12,
                               ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppTheme.destructive.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: AppTheme.destructive.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  'Түүх цэвэрлэх',
+                                  style: AppTheme.headingStyle.copyWith(
+                                    fontSize: 16,
+                                    color: AppTheme.destructive,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Дууссан дуудлага ($finishedCount), саналын түүх, '
+                                  'бүх цэнэглэлт (${purchases.length}), мэдэгдлийг '
+                                  'устгаж шинээр эхлүүлнэ. Идэвхтэй дуудлага хэвээр.',
+                                  style: AppTheme.bodyStyle.copyWith(
+                                    fontSize: 13,
+                                    color: AppTheme.mutedForeground,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                OutlinedButton.icon(
+                                  onPressed: _purging
+                                      ? null
+                                      : () => _confirmAndPurge(
+                                            finishedCount,
+                                            purchases.length,
+                                          ),
+                                  icon: _purging
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Icon(Icons.delete_sweep_outlined),
+                                  label: Text(
+                                    _purging ? 'Цэвэрлэж байна...' : 'Түүх цэвэрлэх',
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppTheme.destructive,
+                                    side: const BorderSide(
+                                      color: AppTheme.destructive,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const SizedBox(height: 16),
