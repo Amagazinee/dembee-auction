@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/auth_state_notifier.dart';
@@ -66,7 +67,10 @@ class AppRouter {
             ),
             GoRoute(
               path: '/login',
-              builder: (context, state) => const LoginScreen(),
+              pageBuilder: (context, state) => _heroFadePage(
+                state: state,
+                child: const LoginScreen(),
+              ),
             ),
             GoRoute(
               path: '/register',
@@ -81,7 +85,10 @@ class AppRouter {
             ),
             GoRoute(
               path: '/home',
-              builder: (context, state) => const HomeScreen(),
+              pageBuilder: (context, state) => _heroFadePage(
+                state: state,
+                child: const HomeScreen(),
+              ),
             ),
             GoRoute(
               path: '/topup',
@@ -150,4 +157,25 @@ class AppRouter {
         );
 
   final GoRouter router;
+}
+
+Page<void> _heroFadePage({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 450),
+    reverseTransitionDuration: const Duration(milliseconds: 300),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOut,
+        ),
+        child: child,
+      );
+    },
+  );
 }

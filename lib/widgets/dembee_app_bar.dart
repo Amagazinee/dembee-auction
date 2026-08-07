@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/constants/app_constants.dart';
 import '../core/app_navigation.dart';
 import '../models/user_model.dart';
 import '../providers/notification_notifier.dart';
@@ -19,6 +20,7 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showAddAuction = false,
     this.showHomeButton = false,
     this.onAddAuction,
+    this.logoHeroTag,
   });
 
   final int bidBalance;
@@ -27,6 +29,7 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool showAddAuction;
   final bool showHomeButton;
   final VoidCallback? onAddAuction;
+  final Object? logoHeroTag;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -79,6 +82,7 @@ class DembeeAppBar extends StatelessWidget implements PreferredSizeWidget {
                       textSize: compact ? 12 : 16,
                       compact: compact,
                       showText: !iconOnly,
+                      heroTag: logoHeroTag,
                     ),
                     if (showAdminBadge) ...[
                       SizedBox(width: compact ? 4 : 6),

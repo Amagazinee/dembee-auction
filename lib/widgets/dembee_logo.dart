@@ -11,12 +11,14 @@ class DembeeLogo extends StatelessWidget {
     this.showText = true,
     this.textSize,
     this.compact = false,
+    this.heroTag,
   });
 
   final double size;
   final bool showText;
   final double? textSize;
   final bool compact;
+  final Object? heroTag;
 
   static const assetPath = 'assets/images/logo.png';
 
@@ -25,7 +27,7 @@ class DembeeLogo extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        DembeeLogoIcon(size: size),
+        DembeeLogoIcon(size: size, heroTag: heroTag),
         if (showText) ...[
           SizedBox(width: compact ? 6 : 8),
           _Wordmark(
@@ -44,16 +46,18 @@ class DembeeLogoIcon extends StatelessWidget {
     super.key,
     required this.size,
     this.showGlow = false,
+    this.heroTag,
   });
 
   final double size;
   final bool showGlow;
+  final Object? heroTag;
 
   @override
   Widget build(BuildContext context) {
     final radius = size * 0.04;
 
-    return ClipRRect(
+    final icon = ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: Image.asset(
         DembeeLogo.assetPath,
@@ -65,6 +69,16 @@ class DembeeLogoIcon extends StatelessWidget {
           borderRadius: radius,
           showGlow: showGlow,
         ),
+      ),
+    );
+
+    if (heroTag == null) return icon;
+
+    return Hero(
+      tag: heroTag!,
+      child: Material(
+        type: MaterialType.transparency,
+        child: icon,
       ),
     );
   }
@@ -130,9 +144,16 @@ class _Wordmark extends StatelessWidget {
 
 /// Том лого — splash, login hero
 class DembeeLogoLarge extends StatelessWidget {
-  const DembeeLogoLarge({super.key, this.size = 120});
+  const DembeeLogoLarge({
+    super.key,
+    this.size = 120,
+    this.heroTag,
+    this.wordmarkOpacity = 1,
+  });
 
   final double size;
+  final Object? heroTag;
+  final double wordmarkOpacity;
 
   @override
   Widget build(BuildContext context) {
@@ -141,11 +162,19 @@ class DembeeLogoLarge extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        DembeeLogoIcon(size: size, showGlow: true),
-        SizedBox(height: size * 0.14),
-        _Wordmark(
-          fontSize: textSize,
-          showTagline: true,
+        DembeeLogoIcon(size: size, showGlow: true, heroTag: heroTag),
+        Opacity(
+          opacity: wordmarkOpacity.clamp(0.0, 1.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(height: size * 0.14),
+              _Wordmark(
+                fontSize: textSize,
+                showTagline: true,
+              ),
+            ],
+          ),
         ),
       ],
     );
