@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   final now = DateTime(2026, 7, 8, 12, 0);
+  final filter = ReportFilter.fromPeriod(ReportPeriod.all, now: now);
 
   UserModel user({
     required String uid,
@@ -29,6 +30,7 @@ void main() {
     required int bidCount,
     String status = 'completed',
     DateTime? createdAt,
+    DateTime? refundedAt,
   }) {
     return PurchaseModel(
       id: id,
@@ -39,12 +41,13 @@ void main() {
       paymentMethod: 'test',
       status: status,
       createdAt: createdAt ?? now,
+      refundedAt: refundedAt,
     );
   }
 
   test('builds revenue summary for period', () {
     final report = AdminReportBuilder.build(
-      period: ReportPeriod.all,
+      filter: filter,
       users: [
         user(uid: 'u1'),
         user(uid: 'u2', banned: true),
@@ -58,10 +61,27 @@ void main() {
           status: 'active',
           totalBids: 12,
         ),
+        AuctionModel(
+          id: 'a2',
+          title: 'Watch',
+          price: 50,
+          endsAt: now.subtract(const Duration(hours: 1)),
+          status: 'closed',
+          winnerUid: 'u1',
+          winnerName: 'Winner',
+          finalPrice: 55,
+          updatedAt: now,
+        ),
       ],
       purchases: [
         purchase(id: 'p1', amount: 10000, bidCount: 10),
-        purchase(id: 'p2', amount: 30000, bidCount: 40, status: 'refunded'),
+        purchase(
+          id: 'p2',
+          amount: 30000,
+          bidCount: 40,
+          status: 'refunded',
+          refundedAt: now,
+        ),
       ],
       bids: [
         BidHistoryModel(
@@ -84,11 +104,13 @@ void main() {
     expect(report.refundedAmount, 30000);
     expect(report.netRevenue, -20000);
     expect(report.bidsInPeriod, 1);
+    expect(report.successfulAuctions.length, 1);
+    expect(report.successfulAuctions.first.title, 'Watch');
   });
 
   test('exports csv with header rows', () {
     final report = AdminReportBuilder.build(
-      period: ReportPeriod.today,
+      filter: ReportFilter.fromPeriod(ReportPeriod.today, now: now),
       users: [user(uid: 'u1')],
       auctions: const [],
       purchases: [purchase(id: 'p1', amount: 5000, bidCount: 10)],

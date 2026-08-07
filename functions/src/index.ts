@@ -23,6 +23,7 @@ import {
   qpayCallback,
 } from "./qpay_payment";
 import { verifyEmailForPasswordReset, requestPasswordReset } from "./password_reset";
+import { uploadAuctionImageAdmin } from "./auction_image";
 
 admin.initializeApp();
 
@@ -127,3 +128,4 @@ export const sweepAuctionLifecycle = onSchedule(
 
 export { createQPayPayment, checkQPayPayment, qpayCallback };
 export { requestPasswordReset, verifyEmailForPasswordReset };
+export { uploadAuctionImageAdmin };
