@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../core/auction_filter.dart';
 import '../../core/errors/app_exception.dart';
 import '../../models/auction_model.dart';
@@ -126,6 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
             showAdminBadge: isAdmin,
             showAddAuction: isAdmin,
             onAddAuction: () => context.push('/admin/add-auction'),
+            logoHeroTag: AppConstants.dembeeLogoHeroTag,
           ),
           body: Column(
             children: [

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/constants/app_constants.dart';
 import '../theme/app_theme.dart';
 import 'dembee_logo.dart';
 
@@ -65,7 +66,11 @@ class _HeroSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const DembeeLogo(size: 40, textSize: 22),
+          const DembeeLogo(
+            size: 40,
+            textSize: 22,
+            heroTag: AppConstants.dembeeLogoHeroTag,
+          ),
           SizedBox(height: compact ? 32 : 64),
           Text(
             'Монголын Хамгийн Том\nДуудлага Худалдаа',

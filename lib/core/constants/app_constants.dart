@@ -5,6 +5,9 @@ class AppConstants {
   static const String appName = 'Дэмбээ';
   static const String appNameEn = 'Dembee Auction';
 
+  /// Splash → home/login Hero шилжилтийн tag
+  static const Object dembeeLogoHeroTag = 'dembee_logo_hero';
+
   /// Бүртгэл үүсэхэд автоматаар admin role өгөх имэйлүүд
   static const List<String> adminSeedEmails = [
     'admin@dembee.mn',
