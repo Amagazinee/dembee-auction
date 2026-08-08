@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
+import { uploadAuctionImageAdmin } from "./auction_image";
 
 admin.initializeApp();
 
@@ -118,6 +119,8 @@ export const purgeHistoricalData = onCall({ region }, async (request) => {
     db.collection("notifications"),
   );
 
-  logger.info("purgeHistoricalData дууслаа", counts);
+  logger.info("purgeHistoricalData done", counts);
   return counts;
 });
+
+export { uploadAuctionImageAdmin };
