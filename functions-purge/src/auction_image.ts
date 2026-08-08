@@ -1,9 +1,56 @@
 import { randomUUID } from "crypto";
 import * as admin from "firebase-admin";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { logger } from "firebase-functions";
 
 const region = "asia-southeast1";
 const MAX_BYTES = 5 * 1024 * 1024;
+const PROJECT_ID = "dembee-auction";
+const STORAGE_BUCKETS = [
+  `${PROJECT_ID}.firebasestorage.app`,
+  `${PROJECT_ID}.appspot.com`,
+];
+
+async function saveImageToBucket(
+  buffer: Buffer,
+  objectPath: string,
+  contentType: string,
+  token: string,
+): Promise<{ bucketName: string; objectPath: string }> {
+  const candidates = [
+    admin.app().options.storageBucket,
+    ...STORAGE_BUCKETS,
+  ].filter((value, index, array): value is string => {
+    return !!value && array.indexOf(value) === index;
+  });
+
+  let lastError: unknown;
+  for (const bucketName of candidates) {
+    try {
+      const bucket = admin.storage().bucket(bucketName);
+      const file = bucket.file(objectPath);
+      await file.save(buffer, {
+        metadata: {
+          contentType,
+          metadata: {
+            firebaseStorageDownloadTokens: token,
+          },
+        },
+      });
+      return { bucketName, objectPath };
+    } catch (error) {
+      lastError = error;
+      logger.warn(`Bucket ${bucketName} upload failed`, error);
+    }
+  }
+
+  throw new HttpsError(
+    "internal",
+    lastError instanceof Error
+      ? lastError.message
+      : "Storage bucket not found",
+  );
+}
 
 async function assertAdminUid(uid: string): Promise<void> {
   const db = admin.firestore();
@@ -46,22 +93,12 @@ export const uploadAuctionImageAdmin = onCall({ region }, async (request) => {
   const safeExt = extension.toLowerCase() === "png" ? "png" : "jpg";
   const contentType = safeExt === "png" ? "image/png" : "image/jpeg";
   const objectPath = `auctions/${auctionId}/cover.${safeExt}`;
-  const bucket = admin.storage().bucket();
-  const file = bucket.file(objectPath);
   const token = randomUUID();
 
-  await file.save(buffer, {
-    metadata: {
-      contentType,
-      metadata: {
-        firebaseStorageDownloadTokens: token,
-      },
-    },
-  });
-
-  const encodedPath = encodeURIComponent(objectPath);
+  const saved = await saveImageToBucket(buffer, objectPath, contentType, token);
+  const encodedPath = encodeURIComponent(saved.objectPath);
   const downloadUrl =
-    `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodedPath}?alt=media&token=${token}`;
+    `https://firebasestorage.googleapis.com/v0/b/${saved.bucketName}/o/${encodedPath}?alt=media&token=${token}`;
 
   return { downloadUrl };
 });

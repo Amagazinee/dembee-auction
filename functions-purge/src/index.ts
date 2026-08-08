@@ -3,7 +3,13 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 import { uploadAuctionImageAdmin } from "./auction_image";
 
-admin.initializeApp();
+const PROJECT_ID = "dembee-auction";
+const STORAGE_BUCKET = `${PROJECT_ID}.firebasestorage.app`;
+
+admin.initializeApp({
+  projectId: PROJECT_ID,
+  storageBucket: STORAGE_BUCKET,
+});
 
 const region = "asia-southeast1";
 const BATCH_SIZE = 400;
